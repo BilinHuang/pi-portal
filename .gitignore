@@ -1,0 +1,17 @@
+# Python & Virtualenv
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite WAL database files
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+mp3/*
+
+# macOS
+.DS_Store
+
