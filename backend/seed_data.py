@@ -2,7 +2,7 @@
 
 Creates or updates:
 - Default users: `admin` (`admin123`) and `guest_user` (`user123`)
-- Pre-configured services including Story Studio (`story-studio`) and 3-Tier Novel Reader (`novel-reader`)
+- Pre-configured services including Story Studio (`story-studio`) and 3-Tier Novel Reader (`novel-reader`) under `18+`
 - Pre-configured activation codes
 - Default sample announcements & notes for 'pi-status-note'
 """
@@ -82,7 +82,7 @@ def seed():
                 "target_url": "/apps/mac-ai-assistant",
                 "open_in_new_tab": False,
                 "status": "offline",
-                "sort_order": 5,
+                "sort_order": 3,
             },
             {
                 "slug": "smart-home-hub",
@@ -93,7 +93,7 @@ def seed():
                 "target_url": "/apps/smart-home-hub",
                 "open_in_new_tab": False,
                 "status": "wip",
-                "sort_order": 6,
+                "sort_order": 4,
             },
             {
                 "slug": "family-recipes",
@@ -181,7 +181,7 @@ def seed():
                 "target_url": "/apps/story-studio",
                 "open_in_new_tab": False,
                 "status": "active",
-                "sort_order": 3,
+                "sort_order": 1,
             },
             {
                 "slug": "novel-reader",
@@ -192,7 +192,7 @@ def seed():
                 "target_url": "/apps/novel-reader",
                 "open_in_new_tab": False,
                 "status": "active",
-                "sort_order": 4,
+                "sort_order": 2,
             },
             {
                 "slug": "midnight-cinema",
@@ -203,7 +203,7 @@ def seed():
                 "target_url": "/apps/midnight-cinema",
                 "open_in_new_tab": True,
                 "status": "active",
-                "sort_order": 1,
+                "sort_order": 3,
             },
             {
                 "slug": "secret-archive",
@@ -214,7 +214,7 @@ def seed():
                 "target_url": "/apps/secret-archive",
                 "open_in_new_tab": True,
                 "status": "offline",
-                "sort_order": 2,
+                "sort_order": 4,
             },
         ]
 
@@ -233,9 +233,10 @@ def seed():
                 existing_svc.icon = s_data["icon"]
                 existing_svc.name = s_data["name"]
                 existing_svc.description = s_data["description"]
-                existing_svc.status = s_data["status"]
-                existing_svc.is_enabled = s_data["status"] == "active"
-                existing_svc.sort_order = s_data["sort_order"]
+                # Ensure story-studio and novel-reader are migrated to 18+ if they were previously in 6+
+                if s_data["slug"] in ("story-studio", "novel-reader") and existing_svc.tier == "6+":
+                    existing_svc.tier = "18+"
+                    existing_svc.sort_order = s_data["sort_order"]
 
         # 3. Seed Activation Codes
         codes_data = [

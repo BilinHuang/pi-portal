@@ -107,11 +107,17 @@ class CreateServiceRequest(BaseModel):
     target_url: str = Field(..., min_length=1, max_length=500)
     status: str = Field(default="active", pattern=r"^(active|disabled|offline|wip)$")
     open_in_new_tab: bool = True
-    sort_order: int = 0
+    sort_order: int = 1
 
 
 class UpdateServiceStatusRequest(BaseModel):
     status: str = Field(..., pattern=r"^(active|disabled|offline|wip)$")
+
+
+class UpdateServicePlacementRequest(BaseModel):
+    tier: Optional[str] = Field(default=None, pattern=r"^(6\+|9\+|12\+|15\+|18\+)$")
+    sort_order: Optional[int] = Field(default=None, ge=0, le=999)
+    direction: Optional[str] = Field(default=None, pattern=r"^(up|down)$")
 
 
 # Admin User & AI Quota Schemas

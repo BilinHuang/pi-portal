@@ -4,6 +4,14 @@
 const Dashboard = {
   isAdmin: false,
 
+  tierOptions: [
+    { key: "6+", label: "公共基础 (6+)" },
+    { key: "9+", label: "家庭共享 (9+)" },
+    { key: "12+", label: "云端开发 (12+)" },
+    { key: "15+", label: "核心网络 (15+)" },
+    { key: "18+", label: "私密专区 (18+)" },
+  ],
+
   async refreshAll() {
     await this.loadIdentity();
     const tasks = [this.loadServices()];
@@ -86,7 +94,34 @@ const Dashboard = {
               <span>${this.escapeHtml(svc.icon)}</span>
               <span>${this.escapeHtml(svc.name)}</span>
             </span>
-            <span class="switch-item-group">${this.escapeHtml(svc.category_label)}</span>
+            <div style="display:flex;align-items:center;gap:0.3rem;">
+              <select
+                title="调整所属分级"
+                onchange="Dashboard.setServicePlacement(${svc.id}, { tier: this.value })"
+                style="background:#090d16;color:#cbd5e1;border:1px solid rgba(255,255,255,0.14);border-radius:6px;padding:2px 5px;font-size:0.72rem;outline:none;"
+              >
+                ${this.tierOptions
+                  .map(
+                    (t) =>
+                      `<option value="${t.key}" ${svc.tier === t.key ? "selected" : ""}>${t.label}</option>`
+                  )
+                  .join("")}
+              </select>
+              <button
+                type="button"
+                class="btn-action"
+                title="在当前分类内前移"
+                style="padding:1px 5px;font-size:0.7rem;"
+                onclick="Dashboard.setServicePlacement(${svc.id}, { direction: 'up' })"
+              >↑</button>
+              <button
+                type="button"
+                class="btn-action"
+                title="在当前分类内后移"
+                style="padding:1px 5px;font-size:0.7rem;"
+                onclick="Dashboard.setServicePlacement(${svc.id}, { direction: 'down' })"
+              >↓</button>
+            </div>
           </div>
           <div class="state-segmented">
             ${states
@@ -116,6 +151,25 @@ const Dashboard = {
     try {
       const res = await API.adminUpdateServiceStatus(serviceId, newStatus);
       showToast(`状态已切换: ${res.status_label}`);
+      await Promise.all([
+        this.loadAdminSwitchPanel(),
+        this.loadServices(),
+      ]);
+      if (typeof loadAdminData === "function") {
+        const adminModal = document.getElementById("modal-admin");
+        if (adminModal && !adminModal.classList.contains("hidden")) {
+          await loadAdminData();
+        }
+      }
+    } catch (err) {
+      showToast(err.message);
+    }
+  },
+
+  async setServicePlacement(serviceId, payload) {
+    try {
+      const res = await API.adminUpdateServicePlacement(serviceId, payload);
+      showToast(`已更新位置: ${res.category_label} (排序 #${res.sort_order})`);
       await Promise.all([
         this.loadAdminSwitchPanel(),
         this.loadServices(),

@@ -23,6 +23,7 @@ from ..schemas import (
     CreateActivationCodeRequest,
     CreateServiceRequest,
     RegistrationInviteItemSchema,
+    UpdateServicePlacementRequest,
     UpdateServiceStatusRequest,
 )
 from ..security import hash_password
@@ -345,14 +346,17 @@ def delete_activation_code(code_id: int, db: Session = Depends(get_db)):
 
 @router.get("/services")
 def list_all_services_admin(db: Session = Depends(get_db)):
-    """List all services across all groups for admin feature switch & management."""
-    services = (
+    """List all services across all groups, ordered by tier index then sort_order."""
+    all_svcs = (
         db.query(Service)
         .order_by(Service.sort_order.asc(), Service.id.asc())
         .all()
     )
+    tier_rank = {t: i for i, t in enumerate(ALL_TIERS)}
+    all_svcs.sort(key=lambda s: (tier_rank.get(s.tier, 99), s.sort_order, s.id))
+
     result = []
-    for s in services:
+    for s in all_svcs:
         raw_status = getattr(s, "status", "active") or "active"
         s_meta = SERVICE_STATUS_META.get(raw_status, SERVICE_STATUS_META["active"])
         t_meta = TIER_META.get(s.tier, {"label": s.tier})
@@ -397,6 +401,70 @@ def update_service_status_admin(
         "slug": svc.slug,
         "status": svc.status,
         "status_label": s_meta["label"],
+    }
+
+
+@router.patch("/services/{service_id}/placement")
+def update_service_placement_admin(
+    service_id: int,
+    payload: UpdateServicePlacementRequest,
+    db: Session = Depends(get_db),
+):
+    """Update a service's tier (classification group) and/or position (sort_order or up/down shift)."""
+    svc = db.query(Service).filter(Service.id == service_id).first()
+    if not svc:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    old_tier = svc.tier
+    if payload.tier and payload.tier != svc.tier:
+        svc.tier = payload.tier
+        # If moved to a new tier without explicit sort_order, place at the end of that tier
+        if payload.sort_order is None:
+            siblings = (
+                db.query(Service)
+                .filter(Service.tier == payload.tier, Service.id != svc.id)
+                .order_by(Service.sort_order.asc(), Service.id.asc())
+                .all()
+            )
+            svc.sort_order = len(siblings) + 1
+
+    if payload.sort_order is not None:
+        svc.sort_order = payload.sort_order
+
+    db.flush()
+
+    # Handle relative up/down movement within the service's current tier
+    if payload.direction in ("up", "down"):
+        siblings = (
+            db.query(Service)
+            .filter(Service.tier == svc.tier)
+            .order_by(Service.sort_order.asc(), Service.id.asc())
+            .all()
+        )
+        # Normalize sort_order 1..N first so swaps are deterministic
+        for idx, item in enumerate(siblings, start=1):
+            item.sort_order = idx
+        idx_map = [item.id for item in siblings]
+        if svc.id in idx_map:
+            cur_idx = idx_map.index(svc.id)
+            if payload.direction == "up" and cur_idx > 0:
+                prev_item = siblings[cur_idx - 1]
+                svc.sort_order, prev_item.sort_order = prev_item.sort_order, svc.sort_order
+            elif payload.direction == "down" and cur_idx < len(siblings) - 1:
+                next_item = siblings[cur_idx + 1]
+                svc.sort_order, next_item.sort_order = next_item.sort_order, svc.sort_order
+
+    db.commit()
+    db.refresh(svc)
+    t_meta = TIER_META.get(svc.tier, {"label": svc.tier})
+    return {
+        "success": True,
+        "id": svc.id,
+        "slug": svc.slug,
+        "old_tier": old_tier,
+        "tier": svc.tier,
+        "category_label": t_meta["label"],
+        "sort_order": svc.sort_order,
     }
 
 

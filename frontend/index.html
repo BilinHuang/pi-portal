@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pi 5 Portal</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=2.2" />
+  <link rel="stylesheet" href="/static/css/style.css?v=2.3" />
 </head>
 <body>
   <div class="app-shell">
@@ -68,9 +68,9 @@
       <div class="admin-switch-header">
         <div>
           <span class="admin-switch-badge">管理员</span>
-          <h2 class="admin-switch-title">服务状态开关</h2>
+          <h2 class="admin-switch-title">服务状态与位置控制台</h2>
           <p class="admin-switch-subtitle">
-            控制各服务开放状态（关闭、离线或待开发的服务卡片置灰并禁止跳转）。
+            直接调整各服务的所属分级（6+ ~ 18+）、分类内先后位置（↑ / ↓）及运行状态。
           </p>
         </div>
         <button class="btn btn-outline" id="btn-toggle-switch-grid">收起 / 展开</button>
@@ -330,12 +330,13 @@
           <input type="text" id="new-svc-name" placeholder="服务名称" required />
           <input type="text" id="new-svc-icon" placeholder="图标" value="⚡" />
           <select id="new-svc-tier">
-            <option value="6+">公共基础 (Lv.1)</option>
-            <option value="9+">家庭共享 (Lv.2)</option>
-            <option value="12+">云端开发 (Lv.3)</option>
-            <option value="15+">核心网络 (Lv.4)</option>
-            <option value="18+">私密专区 (Lv.5)</option>
+            <option value="6+">公共基础 (6+)</option>
+            <option value="9+">家庭共享 (9+)</option>
+            <option value="12+">云端开发 (12+)</option>
+            <option value="15+">核心网络 (15+)</option>
+            <option value="18+">私密专区 (18+)</option>
           </select>
+          <input type="number" id="new-svc-order" placeholder="排序位置" value="1" min="0" />
           <select id="new-svc-status">
             <option value="active">运行中</option>
             <option value="disabled">已关闭</option>
@@ -350,7 +351,8 @@
           <table class="admin-table">
             <thead>
               <tr>
-                <th>分组</th>
+                <th>分级 (可切换)</th>
+                <th>分类内位置</th>
                 <th>名称</th>
                 <th>Slug</th>
                 <th>状态</th>
@@ -367,9 +369,9 @@
 
   <div class="toast hidden" id="toast"></div>
 
-  <script src="/static/js/api.js?v=2.2"></script>
-  <script src="/static/js/clock.js?v=2.2"></script>
-  <script src="/static/js/dashboard.js?v=2.2"></script>
-  <script src="/static/js/auth.js?v=2.2"></script>
+  <script src="/static/js/api.js?v=2.3"></script>
+  <script src="/static/js/clock.js?v=2.3"></script>
+  <script src="/static/js/dashboard.js?v=2.3"></script>
+  <script src="/static/js/auth.js?v=2.3"></script>
 </body>
 </html>

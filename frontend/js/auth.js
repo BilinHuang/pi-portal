@@ -314,6 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("form-create-service")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     try {
+      const sortVal = parseInt(document.getElementById("new-svc-order")?.value || "1", 10);
       await API.adminCreateService({
         slug: document.getElementById("new-svc-slug").value.trim(),
         name: document.getElementById("new-svc-name").value.trim(),
@@ -323,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
         target_url: document.getElementById("new-svc-url").value.trim(),
         description: document.getElementById("new-svc-desc").value.trim(),
         open_in_new_tab: true,
-        sort_order: 10,
+        sort_order: isNaN(sortVal) ? 1 : sortVal,
       });
       document.getElementById("form-create-service").reset();
       showToast("服务已添加");
@@ -478,14 +479,39 @@ async function loadAdminData() {
         .join("");
     }
 
-    // 3. Services Table
+    // 3. Services Table (with editable Tier & Position Order)
     const svcBody = document.getElementById("admin-services-tbody");
     if (svcBody) {
       svcBody.innerHTML = services
         .map(
           (s) => `
         <tr>
-          <td>${Dashboard.escapeHtml(s.category_label)}</td>
+          <td>
+            <select
+              onchange="Dashboard.setServicePlacement(${s.id}, { tier: this.value })"
+              style="background:#0f172a;color:#38bdf8;border:1px solid rgba(56,189,248,0.28);border-radius:6px;padding:3px 6px;font-size:0.78rem;font-weight:600;"
+            >
+              <option value="6+" ${s.tier === "6+" ? "selected" : ""}>公共基础 (6+)</option>
+              <option value="9+" ${s.tier === "9+" ? "selected" : ""}>家庭共享 (9+)</option>
+              <option value="12+" ${s.tier === "12+" ? "selected" : ""}>云端开发 (12+)</option>
+              <option value="15+" ${s.tier === "15+" ? "selected" : ""}>核心网络 (15+)</option>
+              <option value="18+" ${s.tier === "18+" ? "selected" : ""}>私密专区 (18+)</option>
+            </select>
+          </td>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.25rem;">
+              <button class="btn-action" title="前移" onclick="Dashboard.setServicePlacement(${s.id}, { direction: 'up' })">↑</button>
+              <input
+                type="number"
+                value="${s.sort_order}"
+                min="0"
+                max="999"
+                onchange="Dashboard.setServicePlacement(${s.id}, { sort_order: parseInt(this.value, 10) || 0 })"
+                style="width:48px;background:#0f172a;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:2px 5px;font-size:0.78rem;text-align:center;"
+              />
+              <button class="btn-action" title="后移" onclick="Dashboard.setServicePlacement(${s.id}, { direction: 'down' })">↓</button>
+            </div>
+          </td>
           <td>${Dashboard.escapeHtml(s.icon)} ${Dashboard.escapeHtml(s.name)}</td>
           <td><code>${Dashboard.escapeHtml(s.slug)}</code></td>
           <td>

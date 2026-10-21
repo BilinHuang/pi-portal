@@ -156,6 +156,13 @@ const API = {
     });
   },
 
+  adminUpdateServicePlacement(id, payload) {
+    return this.request(`/api/admin/services/${id}/placement`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
   adminCreateService(payload) {
     return this.request("/api/admin/services", {
       method: "POST",
