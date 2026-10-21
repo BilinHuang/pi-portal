@@ -45,8 +45,8 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 # Default models list (Gemini Flash Lite / Flash / Pro)
 AVAILABLE_MODELS = [
-    {"id": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash Lite (极速轻量)"},
-    {"id": "gemini-2.5-flash", "label": "Gemini 2.5 Flash (主力高性价比)"},
+    {"id": "gemini-3.5-flash-lite-lite", "label": "Gemini 2.5 Flash Lite (极速轻量)"},
+    {"id": "gemini-3.5-flash-lite", "label": "Gemini 2.5 Flash (主力高性价比)"},
     {"id": "gemini-3.1-flash-lite", "label": "Gemini 3.1 Flash Lite"},
     {"id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash Lite"},
     {"id": "gemini-2.5-pro", "label": "Gemini 2.5 Pro (深度长文)"},
@@ -255,7 +255,7 @@ def _build_gemini_payload(
 def call_gemini_sync(
     prompt: str,
     system_prompt: str = "",
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3.5-flash-lite",
     temperature: float = 0.4,
     reasoning_effort: str = "high",
     preferred_key: Optional[str] = None,
@@ -333,7 +333,7 @@ def call_gemini_sync(
 def stream_gemini_tokens(
     prompt: str,
     system_prompt: str = "",
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3.5-flash-lite",
     temperature: float = 0.85,
     reasoning_effort: str = "high",
     preferred_key: Optional[str] = None,
@@ -842,7 +842,7 @@ def _run_idea_worker(
 class RewriteStartRequest(BaseModel):
     text: str
     system_prompt: Optional[str] = None
-    model: str = "gemini-2.5-flash"
+    model: str = "gemini-3.5-flash-lite"
     reasoning_effort: str = "high"
     preferred_key: str = "auto"
 
@@ -851,7 +851,7 @@ class ContinueStartRequest(BaseModel):
     context: str
     direction: Optional[str] = ""
     system_prompt: Optional[str] = None
-    model: str = "gemini-2.5-flash"
+    model: str = "gemini-3.5-flash-lite"
     reasoning_effort: str = "high"
     preferred_key: str = "auto"
 
@@ -859,7 +859,7 @@ class ContinueStartRequest(BaseModel):
 class IdeaStartRequest(BaseModel):
     idea: str
     system_prompt: Optional[str] = None
-    model: str = "gemini-2.5-flash"
+    model: str = "gemini-3.5-flash-lite"
     reasoning_effort: str = "high"
     preferred_key: str = "auto"
 
@@ -1307,10 +1307,10 @@ def render_story_studio_app(service: Service, identity: CurrentIdentity) -> str:
     <div class="studio-config-bar">
       <div class="cfg-item">
         <label for="model-select">Gemini 模型 (支持自定义输入)</label>
-        <input list="model-options" id="model-select" value="gemini-2.5-flash" />
+        <input list="model-options" id="model-select" value="gemini-3.5-flash-lite" />
         <datalist id="model-options">
-          <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-          <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+          <option value="gemini-3.5-flash-lite-lite">Gemini 2.5 Flash Lite</option>
+          <option value="gemini-3.5-flash-lite">Gemini 2.5 Flash</option>
           <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
           <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
           <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
@@ -1595,7 +1595,7 @@ def render_story_studio_app(service: Service, identity: CurrentIdentity) -> str:
 
     async function sendStart(endpoint, payload) {{
       payload.system_prompt = document.getElementById("system-prompt-input").value.trim();
-      payload.model = document.getElementById("model-select").value.trim() || "gemini-2.5-flash";
+      payload.model = document.getElementById("model-select").value.trim() || "gemini-3.5-flash-lite";
       payload.reasoning_effort = document.getElementById("reasoning-select").value;
       payload.preferred_key = document.getElementById("key-select").value;
 
