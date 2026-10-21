@@ -1,4 +1,4 @@
-"""Database seeding script for Pi Stealth Dashboard.
+"""Database seeding script for Pi Stealth Portal.
 
 Creates or updates:
 - Default users: `admin` (password: `admin123`) and `guest_user` (password: `user123`)
@@ -57,8 +57,8 @@ def seed():
             },
             {
                 "slug": "speedtest-node",
-                "name": "内网测速与延迟诊断",
-                "description": "测试当前设备到树莓派 5 节点与 Cloudflare 边缘的响应速度。",
+                "name": "服务器时间、延迟与测速",
+                "description": "测量本机到树莓派服务器的时钟同步偏差、网络往返延迟 (Ping/抖动) 与上下行带宽速度。",
                 "icon": "🚀",
                 "tier": "6+",
                 "target_url": "/apps/speedtest-node",
@@ -205,7 +205,6 @@ def seed():
                     )
                 )
             else:
-                # Update default sample icons/descriptions/statuses if untouched
                 existing_svc.icon = s_data["icon"]
                 existing_svc.name = s_data["name"]
                 existing_svc.description = s_data["description"]

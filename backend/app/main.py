@@ -8,15 +8,15 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import FRONTEND_DIR
 from .database import Base, engine, ensure_schema_migrations
-from .routers import admin, auth, services, widgets
+from .routers import admin, auth, services, speedtest, widgets
 
 # Create tables and apply schema migrations automatically on startup
 Base.metadata.create_all(bind=engine)
 ensure_schema_migrations()
 
 app = FastAPI(
-    title="Pi Stealth Dashboard",
-    version="1.1.0",
+    title="Pi Stealth Portal",
+    version="1.2.0",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
@@ -24,6 +24,7 @@ app = FastAPI(
 
 app.include_router(auth.router)
 app.include_router(services.router)
+app.include_router(speedtest.router)
 app.include_router(widgets.router)
 app.include_router(admin.router)
 

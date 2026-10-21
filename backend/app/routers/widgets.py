@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import os
 import platform
 import time
-from typing import Any, Dict, List, Optional
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter
@@ -22,8 +22,6 @@ WEEKDAY_CN = ["周一", "周二", "周三", "周四", "周五", "周六", "周�
 def get_world_clocks():
     """Return current time across configured default cities (Shanghai, Tokyo, Sydney)."""
     now_utc = datetime.now(timezone.utc)
-    shanghai_dt = now_utc.astimezone(ZoneInfo("Asia/Shanghai"))
-    shanghai_offset_hours = shanghai_dt.utcoffset().total_seconds() / 3600.0
 
     clocks = []
     for item in DEFAULT_TIMEZONES:
@@ -31,7 +29,6 @@ def get_world_clocks():
         local_dt = now_utc.astimezone(tz)
         offset_sec = local_dt.utcoffset().total_seconds()
         offset_hours = offset_sec / 3600.0
-        diff_vs_shanghai = offset_hours - shanghai_offset_hours
 
         sign = "+" if offset_hours >= 0 else ""
         offset_label = (
@@ -39,13 +36,6 @@ def get_world_clocks():
             if offset_hours.is_integer()
             else f"UTC{sign}{offset_hours:.1f}"
         )
-
-        if diff_vs_shanghai == 0:
-            diff_label = "基准时区"
-        elif diff_vs_shanghai > 0:
-            diff_label = f"比上海快 {int(diff_vs_shanghai) if diff_vs_shanghai.is_integer() else diff_vs_shanghai} 小时"
-        else:
-            diff_label = f"比上海慢 {int(abs(diff_vs_shanghai)) if diff_vs_shanghai.is_integer() else abs(diff_vs_shanghai)} 小时"
 
         clocks.append(
             {
@@ -57,7 +47,6 @@ def get_world_clocks():
                 "date": local_dt.strftime("%Y-%m-%d"),
                 "weekday": WEEKDAY_CN[local_dt.weekday()],
                 "utc_offset": offset_label,
-                "diff_label": diff_label,
                 "is_daytime": 6 <= local_dt.hour < 19,
             }
         )

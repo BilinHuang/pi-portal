@@ -4,9 +4,9 @@
  */
 const WorldClock = {
   zones: [
-    { id: "shanghai", city: "上海", country: "CN", timezone: "Asia/Shanghai", utc_offset: "UTC+8", diff_label: "基准时区" },
-    { id: "tokyo", city: "东京", country: "JP", timezone: "Asia/Tokyo", utc_offset: "UTC+9", diff_label: "比上海快 1 小时" },
-    { id: "sydney", city: "悉尼", country: "AU", timezone: "Australia/Sydney", utc_offset: "UTC+11", diff_label: "比上海快 3 小时" },
+    { id: "shanghai", city: "上海", country: "CN", timezone: "Asia/Shanghai", utc_offset: "UTC+8" },
+    { id: "tokyo", city: "东京", country: "JP", timezone: "Asia/Tokyo", utc_offset: "UTC+9" },
+    { id: "sydney", city: "悉尼", country: "AU", timezone: "Australia/Sydney", utc_offset: "UTC+11" },
   ],
   serverTimeOffsetMs: 0,
 
@@ -54,7 +54,6 @@ const WorldClock = {
         <div class="clock-time" id="clock-time-${z.id}">--:--:--</div>
         <div class="clock-bottom">
           <span id="clock-date-${z.id}">----/--/--</span>
-          <span id="clock-diff-${z.id}">${z.diff_label || ""}</span>
         </div>
       </div>
     `
