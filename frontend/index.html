@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pi 5 Center — Dashboard</title>
+  <title>Pi 5 Center — Control Portal</title>
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
@@ -34,7 +34,7 @@
         </button>
 
         <button class="btn btn-outline hidden" id="btn-open-admin">
-          ⚙️ 节点与激活码管理
+          ⚙️ 节点管理中心
         </button>
 
         <button class="btn btn-outline" id="btn-open-login">
@@ -127,7 +127,7 @@
         <button class="modal-close" data-close="modal-login">✕</button>
       </div>
       <p class="modal-subtitle">
-        登录后自动同步账号绑定的服务权限；若当前访客已兑换过激活码，登录时将自动合并至你的账号。
+        登录后自动同步账号绑定的服务权限与专属 AI 调用额度。
       </p>
       <form id="form-login">
         <div class="form-group">
@@ -151,17 +151,49 @@
   <div class="modal-backdrop hidden" id="modal-admin">
     <div class="modal-card modal-wide">
       <div class="modal-header">
-        <h3>⚙️ 节点与激活码管理后台 (Admin Only)</h3>
+        <h3>⚙️ 节点管理中心 (Admin Only)</h3>
         <button class="modal-close" data-close="modal-admin">✕</button>
       </div>
 
       <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="tab-codes">激活码管理</button>
-        <button class="admin-tab" data-tab="tab-services">新增与管理服务</button>
+        <button class="admin-tab active" data-tab="tab-users">👤 用户与 AI 配额</button>
+        <button class="admin-tab" data-tab="tab-codes">🔑 激活码管理</button>
+        <button class="admin-tab" data-tab="tab-services">📦 应用与服务管理</button>
       </div>
 
-      <!-- Tab 1: Activation Codes -->
-      <div class="admin-tab-pane" id="tab-codes">
+      <!-- Tab 1: User & AI Quota Management -->
+      <div class="admin-tab-pane" id="tab-users">
+        <form class="admin-inline-form" id="form-create-user" style="margin-bottom:1rem;">
+          <input type="text" id="new-user-name" placeholder="新用户名" required />
+          <input type="password" id="new-user-pwd" placeholder="初始密码" required />
+          <select id="new-user-role">
+            <option value="user" selected>普通用户 (User)</option>
+            <option value="admin">管理员 (Admin)</option>
+          </select>
+          <input type="number" id="new-user-ai-daily" placeholder="每日AI额度 (-1无限)" value="50" min="-1" required />
+          <input type="number" id="new-user-ai-rpm" placeholder="RPM频率 (次/分)" value="10" min="1" required />
+          <button type="submit" class="btn btn-accent">+ 创建账号</button>
+        </form>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>用户名</th>
+                <th>角色</th>
+                <th>AI 每日配额与今日调用</th>
+                <th>频率上限 (RPM)</th>
+                <th>密码管理</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Activation Codes -->
+      <div class="admin-tab-pane hidden" id="tab-codes">
         <form class="admin-inline-form" id="form-create-code">
           <input type="text" id="new-code-str" placeholder="激活码 (如 VIP-PASS-888)" required />
           <input type="text" id="new-code-tier" placeholder="内部权限组 (如 18+ / <=15+ / *)" />
@@ -187,7 +219,7 @@
         </div>
       </div>
 
-      <!-- Tab 2: Services -->
+      <!-- Tab 3: Services -->
       <div class="admin-tab-pane hidden" id="tab-services">
         <form class="admin-inline-form" id="form-create-service">
           <input type="text" id="new-svc-slug" placeholder="英文标识 slug" required />

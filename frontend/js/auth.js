@@ -1,5 +1,5 @@
 /**
- * Authentication, Activation Code Redemption, and Admin Modal Interactions
+ * Authentication, Activation Code Redemption, User & AI Quota Admin Interactions
  */
 document.addEventListener("DOMContentLoaded", () => {
   WorldClock.init();
@@ -116,6 +116,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Admin Create User
+  document.getElementById("form-create-user")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      const username = document.getElementById("new-user-name").value.trim();
+      const password = document.getElementById("new-user-pwd").value;
+      const role = document.getElementById("new-user-role").value;
+      const aiDaily = parseInt(document.getElementById("new-user-ai-daily").value, 10);
+      const aiRpm = parseInt(document.getElementById("new-user-ai-rpm").value, 10);
+
+      await API.adminCreateUser({
+        username,
+        password,
+        role,
+        ai_daily_limit: aiDaily,
+        ai_rpm_limit: aiRpm,
+      });
+
+      document.getElementById("form-create-user").reset();
+      document.getElementById("new-user-ai-daily").value = "50";
+      document.getElementById("new-user-ai-rpm").value = "10";
+      showToast(`用户 [${username}] 已创建成功`);
+      await loadAdminData();
+    } catch (err) {
+      showToast(err.message);
+    }
+  });
+
   // Admin Create Activation Code
   document.getElementById("form-create-code")?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -163,11 +191,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadAdminData() {
   try {
-    const [codes, services] = await Promise.all([
+    const [users, codes, services] = await Promise.all([
+      API.adminListUsers(),
       API.adminListCodes(),
       API.adminListServices(),
     ]);
 
+    // 1. Users & AI Quota Table
+    const usersBody = document.getElementById("admin-users-tbody");
+    if (usersBody) {
+      usersBody.innerHTML = users
+        .map((u) => {
+          const isUnlimited = u.ai_daily_limit === -1 || u.role === "admin";
+          const quotaText = isUnlimited
+            ? `👑 无限制 (${u.ai_used_today} 次已用)`
+            : `${u.ai_used_today} / ${u.ai_daily_limit} 次 (今日)`;
+          const roleBadge =
+            u.role === "admin"
+              ? `<span class="tier-badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3);">管理员</span>`
+              : `<span class="tier-badge" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);">普通用户</span>`;
+
+          return `
+            <tr>
+              <td><strong>${Dashboard.escapeHtml(u.username)}</strong></td>
+              <td>${roleBadge}</td>
+              <td><code>${quotaText}</code></td>
+              <td><code>${u.ai_rpm_limit} 次/分</code></td>
+              <td>
+                <button class="btn-action" onclick="resetUserPassword(${u.id}, '${Dashboard.escapeHtml(u.username)}')">🔑 重置密码</button>
+              </td>
+              <td>
+                <div style="display:flex;gap:0.35rem;">
+                  <button class="btn-action" onclick="editUserAiQuota(${u.id}, ${u.ai_daily_limit}, ${u.ai_rpm_limit})">⚙️ 配额</button>
+                  ${
+                    u.role !== "admin"
+                      ? `<button class="btn-danger-sm" onclick="removeUser(${u.id}, '${Dashboard.escapeHtml(u.username)}')">删除</button>`
+                      : ""
+                  }
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+
+    // 2. Codes Table
     const codesBody = document.getElementById("admin-codes-tbody");
     if (codesBody) {
       codesBody.innerHTML = codes
@@ -188,6 +257,7 @@ async function loadAdminData() {
         .join("");
     }
 
+    // 3. Services Table
     const svcBody = document.getElementById("admin-services-tbody");
     if (svcBody) {
       svcBody.innerHTML = services
@@ -221,6 +291,51 @@ async function loadAdminData() {
     showToast(err.message);
   }
 }
+
+window.resetUserPassword = async function (userId, username) {
+  const newPwd = prompt(`请输入用户 [${username}] 的新密码:`);
+  if (!newPwd || !newPwd.trim()) return;
+
+  try {
+    const res = await API.adminResetPassword(userId, newPwd.trim());
+    showToast(res.message || "密码已重置");
+  } catch (err) {
+    showToast(err.message);
+  }
+};
+
+window.editUserAiQuota = async function (userId, currentDaily, currentRpm) {
+  const dailyStr = prompt(`设置每日 AI 调用上限次数 (-1 为无限次):`, String(currentDaily));
+  if (dailyStr === null) return;
+  const rpmStr = prompt(`设置每分钟请求频次上限 (RPM):`, String(currentRpm));
+  if (rpmStr === null) return;
+
+  const daily = parseInt(dailyStr, 10);
+  const rpm = parseInt(rpmStr, 10);
+  if (isNaN(daily) || isNaN(rpm)) {
+    alert("请输入合法的数字！");
+    return;
+  }
+
+  try {
+    await API.adminUpdateAiQuota(userId, { ai_daily_limit: daily, ai_rpm_limit: rpm });
+    showToast("AI 调用限额与频率已更新");
+    await loadAdminData();
+  } catch (err) {
+    showToast(err.message);
+  }
+};
+
+window.removeUser = async function (userId, username) {
+  if (!confirm(`确定要删除用户 [${username}] 吗？此操作无法恢复。`)) return;
+  try {
+    await API.adminDeleteUser(userId);
+    showToast(`用户 [${username}] 已删除`);
+    await loadAdminData();
+  } catch (err) {
+    showToast(err.message);
+  }
+};
 
 window.removeCode = async function (id) {
   await API.adminDeleteCode(id);

@@ -72,7 +72,7 @@ def ensure_schema_migrations():
             if "ai_last_reset" not in user_cols:
                 conn.execute(
                     text(
-                        "ALTER TABLE users ADD COLUMN ai_last_reset DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;"
+                        "ALTER TABLE users ADD COLUMN ai_last_reset DATETIME DEFAULT '1970-01-01 00:00:00';"
                     )
                 )
 

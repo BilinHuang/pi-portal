@@ -1,5 +1,5 @@
 /**
- * API helper wrapper for Pi Stealth Dashboard
+ * API helper wrapper for Pi Stealth Portal
  */
 const API = {
   async request(url, options = {}) {
@@ -58,7 +58,48 @@ const API = {
     return this.request("/api/widgets/system");
   },
 
+  getAiQuota() {
+    return this.request("/api/ai/quota");
+  },
+
+  consumeAiQuota() {
+    return this.request("/api/ai/consume", {
+      method: "POST",
+    });
+  },
+
   // Admin APIs (return 404 unless logged in as admin)
+  adminListUsers() {
+    return this.request("/api/admin/users");
+  },
+
+  adminCreateUser(payload) {
+    return this.request("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  adminResetPassword(userId, new_password) {
+    return this.request(`/api/admin/users/${userId}/password`, {
+      method: "PUT",
+      body: JSON.stringify({ new_password }),
+    });
+  },
+
+  adminUpdateAiQuota(userId, payload) {
+    return this.request(`/api/admin/users/${userId}/ai-quota`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  adminDeleteUser(userId) {
+    return this.request(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+    });
+  },
+
   adminListCodes() {
     return this.request("/api/admin/codes");
   },
