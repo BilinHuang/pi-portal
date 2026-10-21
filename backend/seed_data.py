@@ -4,6 +4,7 @@ Creates or updates:
 - Default users: `admin` (password: `admin123`) and `guest_user` (password: `user123`)
 - Pre-configured services with operational status tags ('active', 'disabled', 'offline', 'wip')
 - Pre-configured activation codes (infinite uses, limited count uses, single-service unlock)
+- Default sample announcements & notes for 'pi-status-note'
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from backend.app.database import Base, SessionLocal, engine, ensure_schema_migrations
-from backend.app.models import ActivationCode, Service, User
+from backend.app.models import ActivationCode, Note, Service, User
 from backend.app.security import hash_password
 
 
@@ -43,11 +44,10 @@ def seed():
 
         # 2. Seed Services across internal tiers with realistic operational statuses
         services_data = [
-            # 6+ Public Baseline
             {
                 "slug": "pi-status-note",
                 "name": "节点公告与便签",
-                "description": "树莓派公开运行日志、局域网常用备忘录与公告板。",
+                "description": "树莓派公开运行日志、局域网常用备忘录、待办事项与常用命令速记。",
                 "icon": "📋",
                 "tier": "6+",
                 "target_url": "/apps/pi-status-note",
@@ -88,7 +88,6 @@ def seed():
                 "status": "wip",
                 "sort_order": 4,
             },
-            # 9+ Tier
             {
                 "slug": "family-recipes",
                 "name": "共享菜谱与采购清单",
@@ -111,7 +110,6 @@ def seed():
                 "status": "disabled",
                 "sort_order": 2,
             },
-            # 12+ Tier
             {
                 "slug": "immich-photos",
                 "name": "Immich 私有云相册",
@@ -145,7 +143,6 @@ def seed():
                 "status": "wip",
                 "sort_order": 3,
             },
-            # 15+ Tier
             {
                 "slug": "vaultwarden",
                 "name": "Vaultwarden 密码金库",
@@ -168,7 +165,6 @@ def seed():
                 "status": "disabled",
                 "sort_order": 2,
             },
-            # 18+ Stealth Tier
             {
                 "slug": "midnight-cinema",
                 "name": "深夜私人影院",
@@ -259,6 +255,36 @@ def seed():
             )
             if not existing_code:
                 db.add(ActivationCode(**c_data))
+
+        # 4. Seed initial sample Notes if empty
+        if db.query(Note).count() == 0:
+            sample_notes = [
+                Note(
+                    title="🍓 树莓派 5 节点运行与维护说明",
+                    content="当前节点已开启 SQLite WAL 低磨损模式并配置 Systemd 守护进程。\n公网流量近期将切换至 Cloudflare Tunnel，届时无需路由器端口映射即可全站 HTTPS 访问。",
+                    category="bulletin",
+                    priority="info",
+                    is_pinned=True,
+                    author="admin",
+                ),
+                Note(
+                    title="树莓派常用运维命令速查",
+                    content="# 查看服务状态\nsudo systemctl status pi-dashboard\n\n# 拉取更新并自动热重载\ncd ~/Documents/WebApp/portal && git pull",
+                    category="code",
+                    priority="normal",
+                    is_pinned=True,
+                    author="admin",
+                ),
+                Note(
+                    title="近期节点待办事项",
+                    content="1. 配置 Cloudflare Tunnel 绑定主域名\n2. 将 Reachy Mini 本地控制面板拆分至独立仓库\n3. 测试内网千兆测速模块稳定性",
+                    category="todo",
+                    priority="normal",
+                    is_pinned=False,
+                    author="admin",
+                ),
+            ]
+            db.add_all(sample_notes)
 
         db.commit()
         print("✅ 数据库结构升级与测试数据同步完成！")

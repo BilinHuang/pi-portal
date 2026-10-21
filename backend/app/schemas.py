@@ -31,6 +31,9 @@ class AuthStatusResponse(BaseModel):
     unlocked_tiers: List[str]
     unlocked_services: List[str]
     client_ip: str
+    ai_daily_limit: Optional[int] = 50
+    ai_used_today: Optional[int] = 0
+    ai_rpm_limit: Optional[int] = 10
 
 
 class ServiceCardSchema(BaseModel):
@@ -39,7 +42,7 @@ class ServiceCardSchema(BaseModel):
     name: str
     description: str
     icon: str
-    status: str  # 'active' | 'disabled' | 'offline' | 'wip'
+    status: str
     status_label: str
     status_badge_class: str
     is_available: bool
@@ -98,3 +101,33 @@ class CreateServiceRequest(BaseModel):
 
 class UpdateServiceStatusRequest(BaseModel):
     status: str = Field(..., pattern=r"^(active|disabled|offline|wip)$")
+
+
+# Admin User & AI Quota Schemas
+class AdminUserItemSchema(BaseModel):
+    id: int
+    username: str
+    role: str
+    created_at: datetime
+    unlocked_tiers: List[str]
+    unlocked_services: List[str]
+    ai_daily_limit: int
+    ai_used_today: int
+    ai_rpm_limit: int
+
+
+class AdminCreateUserRequest(BaseModel):
+    username: str = Field(..., min_length=1, max_length=50)
+    password: str = Field(..., min_length=1, max_length=128)
+    role: str = Field(default="user", pattern=r"^(admin|user)$")
+    ai_daily_limit: int = Field(default=50, ge=-1)
+    ai_rpm_limit: int = Field(default=10, ge=1)
+
+
+class AdminResetPasswordRequest(BaseModel):
+    new_password: str = Field(..., min_length=1, max_length=128)
+
+
+class AdminUpdateAiQuotaRequest(BaseModel):
+    ai_daily_limit: int = Field(..., ge=-1)
+    ai_rpm_limit: int = Field(default=10, ge=1)

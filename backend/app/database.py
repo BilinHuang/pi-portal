@@ -34,15 +34,45 @@ Base = declarative_base()
 
 
 def ensure_schema_migrations():
-    """Ensure newly added columns (such as services.status) exist in an existing SQLite DB."""
+    """Ensure newly added columns exist in an existing SQLite DB without data loss."""
     with engine.begin() as conn:
-        rows = conn.execute(text("PRAGMA table_info(services);")).fetchall()
-        if rows:
-            col_names = {r[1] for r in rows}
+        # 1. Services table migrations
+        svc_rows = conn.execute(text("PRAGMA table_info(services);")).fetchall()
+        if svc_rows:
+            col_names = {r[1] for r in svc_rows}
             if "status" not in col_names:
                 conn.execute(
                     text(
                         "ALTER TABLE services ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active';"
+                    )
+                )
+
+        # 2. Users table migrations for AI Rate Limits & Quotas
+        user_rows = conn.execute(text("PRAGMA table_info(users);")).fetchall()
+        if user_rows:
+            user_cols = {r[1] for r in user_rows}
+            if "ai_daily_limit" not in user_cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN ai_daily_limit INTEGER NOT NULL DEFAULT 50;"
+                    )
+                )
+            if "ai_used_today" not in user_cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN ai_used_today INTEGER NOT NULL DEFAULT 0;"
+                    )
+                )
+            if "ai_rpm_limit" not in user_cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN ai_rpm_limit INTEGER NOT NULL DEFAULT 10;"
+                    )
+                )
+            if "ai_last_reset" not in user_cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN ai_last_reset DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;"
                     )
                 )
 

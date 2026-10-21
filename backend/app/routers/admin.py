@@ -1,4 +1,4 @@
-"""Stealth Admin Router for managing Feature Switches, Activation Codes, and Services.
+"""Stealth Admin Router for managing Feature Switches, Activation Codes, Services, Users & AI Quotas.
 
 All endpoints require admin role; non-admin requests receive 404 Not Found.
 """
@@ -8,22 +8,164 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..config import SERVICE_STATUS_META, TIER_META
+from ..config import ALL_TIERS, SERVICE_STATUS_META, TIER_META
 from ..database import get_db
-from ..dependencies import require_admin_or_404
-from ..models import ActivationCode, Service
+from ..dependencies import CurrentIdentity, expand_tier_grant, require_admin_or_404
+from ..models import ActivationCode, PermissionGrant, Service, User
 from ..schemas import (
     ActivationCodeItemSchema,
+    AdminCreateUserRequest,
+    AdminResetPasswordRequest,
+    AdminUpdateAiQuotaRequest,
+    AdminUserItemSchema,
     CreateActivationCodeRequest,
     CreateServiceRequest,
     UpdateServiceStatusRequest,
 )
+from ..security import hash_password
 
 router = APIRouter(
     prefix="/api/admin",
     tags=["admin"],
     dependencies=[Depends(require_admin_or_404)],
 )
+
+
+# ==================== User & AI Quota Management ====================
+
+
+@router.get("/users", response_model=List[AdminUserItemSchema])
+def list_users(db: Session = Depends(get_db)):
+    """List all user accounts with their unlocked permissions and AI quota configurations."""
+    users = db.query(User).order_by(User.id.asc()).all()
+    results = []
+
+    for u in users:
+        unlocked_tiers = set()
+        unlocked_services = set()
+        if u.role == "admin":
+            unlocked_tiers = set(ALL_TIERS)
+        else:
+            grants = (
+                db.query(PermissionGrant).filter(PermissionGrant.user_id == u.id).all()
+            )
+            for g in grants:
+                if g.unlocked_tier:
+                    unlocked_tiers.update(expand_tier_grant(g.unlocked_tier))
+                if g.unlocked_service_slug:
+                    unlocked_services.add(g.unlocked_service_slug)
+
+        results.append(
+            AdminUserItemSchema(
+                id=u.id,
+                username=u.username,
+                role=u.role,
+                created_at=u.created_at,
+                unlocked_tiers=sorted(unlocked_tiers),
+                unlocked_services=sorted(unlocked_services),
+                ai_daily_limit=getattr(u, "ai_daily_limit", 50),
+                ai_used_today=getattr(u, "ai_used_today", 0),
+                ai_rpm_limit=getattr(u, "ai_rpm_limit", 10),
+            )
+        )
+
+    return results
+
+
+@router.post("/users", response_model=AdminUserItemSchema)
+def create_user(
+    payload: AdminCreateUserRequest,
+    db: Session = Depends(get_db),
+):
+    """Create a new user account with initial password and AI quota."""
+    username_clean = payload.username.strip()
+    existing = db.query(User).filter(User.username == username_clean).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="该用户名已存在")
+
+    new_user = User(
+        username=username_clean,
+        password_hash=hash_password(payload.password),
+        role=payload.role,
+        ai_daily_limit=payload.ai_daily_limit,
+        ai_used_today=0,
+        ai_rpm_limit=payload.ai_rpm_limit,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return AdminUserItemSchema(
+        id=new_user.id,
+        username=new_user.username,
+        role=new_user.role,
+        created_at=new_user.created_at,
+        unlocked_tiers=ALL_TIERS if new_user.role == "admin" else ["6+"],
+        unlocked_services=[],
+        ai_daily_limit=new_user.ai_daily_limit,
+        ai_used_today=new_user.ai_used_today,
+        ai_rpm_limit=new_user.ai_rpm_limit,
+    )
+
+
+@router.put("/users/{user_id}/password")
+def reset_user_password(
+    user_id: int,
+    payload: AdminResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """Admin resets any user's password directly."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    user.password_hash = hash_password(payload.new_password)
+    db.commit()
+    return {"success": True, "message": f"用户 [{user.username}] 的密码已重置成功"}
+
+
+@router.patch("/users/{user_id}/ai-quota")
+def update_user_ai_quota(
+    user_id: int,
+    payload: AdminUpdateAiQuotaRequest,
+    db: Session = Depends(get_db),
+):
+    """Update AI daily request quota and RPM rate limit for a user."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    user.ai_daily_limit = payload.ai_daily_limit
+    user.ai_rpm_limit = payload.ai_rpm_limit
+    db.commit()
+    return {
+        "success": True,
+        "user_id": user.id,
+        "ai_daily_limit": user.ai_daily_limit,
+        "ai_rpm_limit": user.ai_rpm_limit,
+    }
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    identity: CurrentIdentity = Depends(require_admin_or_404),
+    db: Session = Depends(get_db),
+):
+    """Delete a user account (cannot delete currently logged in admin)."""
+    if identity.user and identity.user.id == user_id:
+        raise HTTPException(status_code=400, detail="不能删除当前登录的管理员账号")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    db.delete(user)
+    db.commit()
+    return {"success": True}
+
+
+# ==================== Activation Codes Management ====================
 
 
 @router.get("/codes", response_model=List[ActivationCodeItemSchema])
@@ -77,6 +219,9 @@ def delete_activation_code(code_id: int, db: Session = Depends(get_db)):
     db.delete(ac)
     db.commit()
     return {"success": True}
+
+
+# ==================== Services Management ====================
 
 
 @router.get("/services")
