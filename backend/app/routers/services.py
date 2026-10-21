@@ -919,6 +919,12 @@ def builtin_mini_app(
         return _render_notes_app(service, identity)
     if slug == "speedtest-node":
         return _render_speedtest_app(service, identity)
+    if slug == "story-studio":
+        from .studio import render_story_studio_app
+        return render_story_studio_app(service, identity)
+    if slug == "novel-reader":
+        from .reader import render_novel_reader_app
+        return render_novel_reader_app(service, identity)
 
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">

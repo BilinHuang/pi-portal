@@ -5,13 +5,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# SQLite WAL database files
+# SQLite WAL database & generated outputs
 data/*.db
 data/*.db-shm
 data/*.db-wal
+data/studio_outputs/
+data/studio_inputs/
+
+# Gemini API Keys (keep keys/README.md tracked, ignore actual .key files)
+keys/*.key
 
 mp3/*
 
 # macOS
 .DS_Store
-
+keys/Gemini1.key keys/gemini2.key

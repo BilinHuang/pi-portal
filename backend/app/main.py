@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import FRONTEND_DIR
 from .database import Base, engine, ensure_schema_migrations
-from .routers import admin, ai, auth, notes, services, speedtest, widgets
+from .routers import admin, ai, auth, notes, reader, services, speedtest, studio, widgets
 
 # Create tables and apply schema migrations automatically on startup
 Base.metadata.create_all(bind=engine)
@@ -16,7 +16,7 @@ ensure_schema_migrations()
 
 app = FastAPI(
     title="Pi Stealth Portal",
-    version="1.4.0",
+    version="1.5.0",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
@@ -28,6 +28,8 @@ app.include_router(speedtest.router)
 app.include_router(notes.router)
 app.include_router(widgets.router)
 app.include_router(ai.router)
+app.include_router(studio.router)
+app.include_router(reader.router)
 app.include_router(admin.router)
 
 if FRONTEND_DIR.exists():

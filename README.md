@@ -1,186 +1,145 @@
-# Pi Stealth Dashboard
+# Pi 5 Stealth Portal
 
-一个专为树莓派 5（Raspberry Pi 5）打造的轻量级、高隐蔽性个人服务仪表盘（Dashboard）。
+专为树莓派 5（Raspberry Pi 5）与本地节点打造的轻量级、高隐蔽性个人服务门户与创作工作站。
 
-本项目集成了多时区时钟挂件、跨平台系统负载监控、外链应用跳转，以及基于年龄/分级体系（`6+`、`9+`、`12+`、`15+`、`18+`）的**隐形权限模型（Stealth RBAC）**。
+采用 **Python FastAPI + SQLite (WAL 模式) + 原生 ES6/CSS** 单进程架构，常驻内存低、零碎文件写入，天然适配树莓派 TF 卡长期运行。
 
 ---
 
-## 核心设计理念
+## 核心特性概览
 
-1. **TF 卡友好与极低开销**
-   - 树莓派 5 搭配 TF 卡运行，需尽量避免碎文件高频随机读写。
-   - 采用 **Python FastAPI + SQLite (WAL 模式)** 单进程架构，常驻内存仅约 50~80MB，空闲 CPU 占用几乎为 0。
-   - 前端采用现代原生 ES6+ / CSS，由 FastAPI 统一伺服静态资源，无多余 Node.js 常驻守护进程。
+### 1. 隐形安全模型（Stealth RBAC / 404 伪装）
+- **未授权完全隐形**：未解锁的分区（`6+`、`9+`、`12+`、`15+`、`18+`）与服务在前端 DOM 与 API 响应中彻底剔除，不留任何占位符。
+- **全局 404 伪装**：越权访问任何受保护 API 或子应用路由时，统一返回与不存在路径完全一致的 `404 Not Found`，防止扫描探测。
+- **服务四态实时管控**：管理员可在首页或后台一键切换任意服务的运行状态：
+  - `active`（运行中）：正常开放跳转。
+  - `disabled`（已关闭）、`offline`（暂不可用）、`wip`（待开发）：卡片自动置灰并拦截跳转。
 
-2. **隐形安全模型（Stealth Security / 404 伪装）**
-   - **完全隐形**：未授权的分类与服务在前端 UI 和 API 返回的 JSON 中彻底剔除，不留占位符或锁定标识。
-   - **404 隐蔽伪装**：若外部用户/扫描器试图直接访问未解锁的 API 或服务跳转路由，后端统一返回标准 `404 Not Found`（绝不返回 `401 Unauthorized` 或 `403 Forbidden`），让未授权路由在公网上不可被嗅探。
+### 2. 右上角统一身份胶囊与认证体系
+- **单胶囊收拢交互**：右上角常驻身份胶囊（`👤 访客 ▾` / `🎟️ 已授权访客 ▾` / `👑 admin ▾`），点击展开下拉菜单（输入激活码、管理中心、登录、注册、退出登录）。
+- **双下拉问答验证注册**：
+  - **问题一（身份归属题）**：初中（`七宝二中` $\to$ 标记 `初中`）、高中（`交附嘉分/交嘉/绞架` $\to$ 标记 `高中`）、大学（`合工大/肥工/hfut/新南威尔士大学/unsw` $\to$ 标记 `大学`）、小名（`菜菜` $\to$ 标记 `家人`），选择问题后动态展开输入框，验证通过后自动授予对应圈层初始权限。
+  - **问题二（生活细节题）**：常玩游戏（`都市天际线 / 原神 / 明日方舟(粥) / 狂热运输2`）或常做运动（`羽毛球`）。
+- **1 小时临时注册码**：注册弹窗底部提供灰色小字入口「使用临时验证码注册」，管理员可在后台一键生成 1 小时有效的免问答注册码。
 
-3. **双轨凭据与激活码机制**
-   - **注册用户**：支持账号密码登录，登录后可兑换激活码将权限绑定至个人账号。
-   - **访客免密激活**：访客无需注册，输入激活码即可换取专属 Session Cookie，立即解锁对应分类。
-   - **次数限制**：激活码支持配置最大使用次数（例如限用 5 次）或无限次（`-1`）。
+### 3. 管理中心（Admin Panel）与 AI 配额架构
+- **账户与密码管理**：支持管理员查看用户所属分类标签（初中/高中/大学/家人）、切换显示明文密码（`👁️`）以及一键重置密码。
+- **AI 算力配额与频次限制**：内置按用户维度的每日调用上限（`ai_daily_limit`，`-1` 为无限）与每分钟请求频次（`ai_rpm_limit`），UTC 跨日自动清零重置。
 
-4. **挂件与应用目录**
-   - **挂件区**：默认提供上海（`Asia/Shanghai`）、东京（`Asia/Tokyo`）、悉尼（`Australia/Sydney`）多地实时时间与时差对比。
-   - **应用区**：按等级分类（`6+` ~ `18+`）展示应用卡片，点击支持同域代理或新标签页直达独立应用。
+### 4. 内置核心子应用
+
+#### ✍️ 小说创作工坊 (`/apps/story-studio`)
+- **多密钥池自动轮询与故障切换 (`keys/*.key`)**：
+  - 自动扫描项目根目录下 `keys/` 文件夹中的所有 `.key` 文件（如 `Gemini1.key`、`gemini2.key`）。
+  - 支持在 UI 中选择「自动轮询与故障切换」或指定单个 Key；当某个 Key 触发 `429` 限流或配额耗尽时，自动无缝切换至下一个 Key 继续生成。
+- **三大创作模式 + 自动加载/可编辑 System Prompt**：
+  1. **错乱重写扩写**：阶段 1 解构剧情、主控方/承制方、器物介质、动作行迹与心理压迫点（JSON 分幕）$\to$ 阶段 2 逐幕深度扩写并流式拼接。
+  2. **剧情承接续写**：长文自动提炼全局前情概括 + 截取末尾 2000 字即时物理场景，结合走向提示自然推演下一幕。
+  3. **灵感起草全篇**：根据核心脑洞规划 3~5 幕递进大纲 $\to$ 逐幕累计前情并展开正文。
+  - 切换模式时自动加载对应模式的默认 `System Prompt`（冷峻客观第三人称、器物触感与受力具象化、生理应激反馈、拒绝道德说教），支持在页面直接修改或一键恢复默认。
+- **默认 High 深度推理与流式监控**：
+  - 默认开启 `High` 推理深度（`thinkingConfig`）与全类别 `BLOCK_NONE`，自动过滤内部思考链，仅将正文通过 SSE 实时流式输出到屏幕，支持随时点击「立即停止」、一键复制全文及历史生成记录回看（自动归档于 `data/studio_outputs/`）。
+
+#### 📖 本地小说阅读 (`/apps/novel-reader`)
+- **三层目录结构导航**：
+  - **第一层（卷 / Epoch）**：读取 `novels/` 根目录下的卷文件夹（如 `epoch1` ~ `epoch6`）。
+  - **第二层（篇章与设定）**：自动区分卷内的**故事篇章文件夹**（如 `双生共振实验`）、**设定/大纲文件夹**（如 `guideline`、`ideas`）以及**卷级文档**（如 `catalog.md`、`naming_convention.md`）。
+  - **第三层（章节正文）**：按自然序号排列章节文件（如 `001_对向X轴的齿轮死锁.txt`、`002_第一记反冲的互害破冰.txt`）。
+- **沉浸式阅读体验**：支持字号缩放（`A- / A+`）、三套主题（默认暗色 / 暖灰护眼 / 纯黑 OLED）、键盘左右方向键切章，以及基于 `localStorage` 的上次阅读进度记忆与一键续读。
+
+#### 🚀 连接测速 (`/apps/speedtest-node`)
+- 纯内存流式测量本机与服务器之间的 **NTP 级时钟偏差（Clock Offset）**、**往返延迟（Ping RTT）**、**网络抖动（Jitter 12 次采样波形）** 与 **上下行带宽（Download / Upload Mbps）**，全程不落盘，零 TF 卡写入损耗。
+
+#### 📋 公告与便签 (`/apps/pi-status-note`)
+- 支持公告、备忘、待办与常用运维命令的增删改查、置顶高亮、分类筛选、关键词即时检索与一键复制。
 
 ---
 
 ## 项目目录结构
 
 ```text
-dashboard/
+portal/
 ├── backend/
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py              # FastAPI 应用入口，配置静态托管与异常捕获
-│   │   ├── config.py            # 全局配置、密钥、数据库路径
-│   │   ├── database.py          # SQLite 引擎、WAL 模式初始化、SessionLocal
-│   │   ├── models.py            # 数据库模型（用户、激活码、服务、授权记录）
-│   │   ├── schemas.py           # Pydantic 输入输出契约
-│   │   ├── security.py          # 密码加盐哈希、Cookie Session 编解码
-│   │   ├── dependencies.py      # 鉴权依赖注入：身份解析、404 隐形校验
+│   │   ├── main.py              # FastAPI 入口、路由注册与全局 404 伪装
+│   │   ├── config.py            # 全局路径、密钥目录、小说目录与注册题库配置
+│   │   ├── database.py          # SQLite WAL 引擎与零损自动 Schema 迁移
+│   │   ├── models.py            # ORM 模型 (User, RegistrationInvite, ActivationCode, Service, Note)
+│   │   ├── schemas.py           # Pydantic 数据契约
+│   │   ├── security.py          # 密码哈希与签名 Cookie 编解码
+│   │   ├── dependencies.py      # 身份解析与隐形权限校验
 │   │   └── routers/
-│   │       ├── auth.py          # 登录/登出/访客通行码兑换/当前身份查询
-│   │       ├── services.py      # 服务列表（按权过滤）、安全跳转路由
-│   │       └── widgets.py       # 多地时钟数据、跨平台系统状态接口
+│   │       ├── auth.py          # 登录、问答验证注册、临时码注册、激活码兑换
+│   │       ├── admin.py         # 用户/密码查看改密、1h临时码生成、AI配额、服务管理
+│   │       ├── studio.py        # 小说创作工坊 API、多 Key 轮询与 Gemini SSE 流式引擎
+│   │       ├── reader.py        # 本地三层小说阅读器目录树与章节读取 API
+│   │       ├── ai.py            # 用户级 AI 每日配额与频次管控接口
+│   │       ├── speedtest.py     # 纯内存时钟偏差与上下行带宽测速接口
+│   │       ├── notes.py         # 节点公告与便签 CRUD 接口
+│   │       ├── services.py      # 服务矩阵过滤与内置子应用挂载路由
+│   │       └── widgets.py       # 多时区时钟与系统遥测状态接口
 │   ├── requirements.txt         # Python 依赖清单
-│   └── seed_data.py             # 预置默认管理员、测试服务和激活码
+│   └── seed_data.py             # 初始化默认账户、服务卡片、激活码与示例便签
 ├── frontend/
-│   ├── index.html               # 仪表盘单页骨架
-│   ├── css/
-│   │   └── style.css            # 暗黑玻璃拟态质感风格、自适应网格布局
-│   └── js/
-│       ├── api.js               # 请求层封装（Fetch 与错误处理）
-│       ├── clock.js             # 多时区时钟实时挂件脚本
-│       ├── dashboard.js         # 仪表盘服务分类动态渲染与隐形控制
-│       └── auth.js              # 登录与激活码兑换模态框交互
-├── data/                        # 数据持久化目录（Git 忽略）
-│   └── dashboard.db             # SQLite 数据库文件
-├── scripts/
-│   ├── run_dev.sh               # macOS 本地热重载启动脚本
-│   └── deploy_pi.sh             # 树莓派 systemd 服务部署脚本
-└── README.md                    # 本文档
+│   ├── index.html               # 门户主界面（统一身份胶囊、时钟挂件、管理弹窗）
+│   ├── css/style.css            # 暗色玻璃拟态样式表
+│   └── js/                      # 前端交互脚本 (api.js, clock.js, dashboard.js, auth.js)
+├── keys/                        # Gemini API 密钥池目录 (keys/*.key 已被 Git 忽略)
+│   ├── README.md                # 密钥存放说明
+│   ├── Gemini1.key              # 主 API Key 文件
+│   └── gemini2.key              # 备用 API Key 文件
+├── novels/                      # 本地三层小说库根目录 (可通过 PORTAL_NOVELS_DIR 自定义)
+│   └── epoch6/
+│       ├── catalog.md
+│       ├── naming_convention.md
+│       ├── guideline/
+│       ├── ideas/
+│       └── 双生共振实验/
+│           ├── 001_对向X轴的齿轮死锁.txt
+│           └── 002_第一记反冲的互害破冰.txt
+├── data/                        # SQLite 数据库与创作工坊生成存档 (Git 忽略)
+└── scripts/
+    ├── run_dev.sh               # macOS 本地开发一键启动脚本 (python3 -m pip)
+    └── deploy_pi.sh             # 树莓派 5 Systemd 生产环境部署脚本
 ```
 
 ---
 
-## 数据库模型设计 (Database Schema)
+## 快速上手与配置说明
 
-### 1. `users` (用户表)
-| 字段 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| `id` | INTEGER PRIMARY KEY | 自增主键 |
-| `username` | VARCHAR(50) UNIQUE | 用户名 |
-| `password_hash` | VARCHAR(255) | 加盐哈希密码 |
-| `role` | VARCHAR(20) | 角色 (`admin` / `user`) |
-| `created_at` | DATETIME | 注册时间 |
-
-### 2. `activation_codes` (激活码表)
-| 字段 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| `id` | INTEGER PRIMARY KEY | 自增主键 |
-| `code` | VARCHAR(64) UNIQUE | 激活口令（如 `INFINITE-18-PASS`） |
-| `grant_tier` | VARCHAR(10) | 授权分类（`6+` / `9+` / `12+` / `15+` / `18+`） |
-| `grant_service_slug` | VARCHAR(50) | 授权特定单应用标识（可选） |
-| `max_uses` | INTEGER | 最大使用次数（`-1` 为无限次） |
-| `used_count` | INTEGER | 当前已消耗次数 |
-| `is_active` | BOOLEAN | 是否可用 |
-| `created_at` | DATETIME | 创建时间 |
-
-### 3. `services` (挂载应用表)
-| 字段 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| `id` | INTEGER PRIMARY KEY | 自增主键 |
-| `slug` | VARCHAR(50) UNIQUE | 唯一路由标识（如 `immich`, `vault`） |
-| `name` | VARCHAR(100) | 展示名称 |
-| `description` | TEXT | 简介 |
-| `icon` | VARCHAR(50) | 图标标识符 |
-| `tier` | VARCHAR(10) | 默认准入分级（`6+` / `9+` / `12+` / `15+` / `18+`） |
-| `target_url` | VARCHAR(255) | 目标跳转 URL |
-| `open_in_new_tab` | BOOLEAN | 是否新窗口打开 |
-| `sort_order` | INTEGER | 排序权重 |
-
-### 4. `user_permissions` (用户/访客已解锁权限记录)
-| 字段 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| `id` | INTEGER PRIMARY KEY | 自增主键 |
-| `user_id` | INTEGER (NULLABLE) | 关联用户 ID（访客为 NULL） |
-| `session_token` | VARCHAR(64) (NULLABLE) | 访客会话标识（已登录用户为 NULL） |
-| `unlocked_tier` | VARCHAR(10) | 已解锁分级 |
-| `unlocked_service_slug` | VARCHAR(50) | 已解锁单个应用 |
-| `created_at` | DATETIME | 激活时间 |
-
----
-
-## 核心 API 设计
-
-### 认证与身份 (`/api/auth`)
-* `POST /api/auth/login`：账号密码登录，下发 HttpOnly Session Cookie。
-* `POST /api/auth/guest-activate`：访客兑换激活码，校验次数后下发包含访客 Token 的 Cookie。
-* `POST /api/auth/redeem-code`：已登录用户兑换激活码，将权限写入用户账号。
-* `GET /api/auth/me`：获取当前登录身份及拥有的分级权限集合。
-* `POST /api/auth/logout`：清除登录与激活 Cookie。
-
-### 服务与路由伪装 (`/api/services`)
-* `GET /api/services`：
-  - **核心逻辑**：根据调用者身份动态查询已解锁分级与服务。
-  - **输出**：仅包含当前身份可见的分级和应用卡片（无权访问的数据源头剔除）。
-* `GET /api/services/launch/{slug}`：
-  - **核心逻辑**：校验当前身份是否拥有该 `slug` 对应的服务或分级权限。
-  - **权限不足**：直接响应 `404 Not Found`。
-  - **权限充足**：重定向 (`307/302`) 至目标 `target_url` 或返回校验成功跳转凭据。
-
-### 小部件 (`/api/widgets`)
-* `GET /api/widgets/timezones`：返回上海、东京、悉尼的标准时区标识、当前时间与相对于 UTC 的偏移量。
-* `GET /api/widgets/system`：跨平台系统负载与内存占用（开发阶段在 macOS 输出本机指标或 Mock 数据，部署在树莓派时读取硬件状态）。
-
----
-
-## 快速上手与本地开发 (macOS)
-
-### 1. 环境准备
+### 1. 启动本地开发环境 (macOS)
 ```bash
-cd /Users/bilinhuang/Documents/WebApp/Pi/dashboard
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r backend/requirements.txt
+cd /Users/bilinhuang/Documents/WebApp/Pi/portal
+./scripts/run_dev.sh
 ```
+脚本会自动创建 `.venv`、使用 `python3 -m pip` 安装依赖、执行 `seed_data.py` 同步数据库及表结构迁移，并在 `http://127.0.0.1:8000` 启动热重载服务。
 
-### 2. 初始化数据库与预置数据
-```bash
-python backend/seed_data.py
+### 2. 配置 Gemini 多密钥池 (`keys/`)
+在 `keys/` 目录下编辑或新建任意 `.key` 文件（如 `Gemini1.key`、`gemini2.key`），直接填入你的 Gemini API Key 字符串：
+```text
+AIzaSyYourActualGeminiApiKeyStringHere
 ```
+- 支持放入多个 `.key` 文件，创作工坊会自动加载并支持轮询与 `429` 故障切换。
+- `keys/*.key` 已配置在 `.gitignore` 中，不会上传至 Git 仓库。
 
-### 3. 启动开发服务器
-```bash
-uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
-```
-访问 `http://127.0.0.1:8000` 即可进入 Dashboard。
+### 3. 挂载本地三层小说目录 (`novels/`)
+- **方式 A**：直接将你的 `epoch1` ~ `epoch6` 文件夹复制或软链接到项目下的 `novels/` 目录中：
+  ```bash
+  ln -s /path/to/G_S/epoch* /Users/bilinhuang/Documents/WebApp/Pi/portal/novels/
+  ```
+- **方式 B**：启动时通过环境变量 `PORTAL_NOVELS_DIR` 直接指向你的小说总目录：
+  ```bash
+  PORTAL_NOVELS_DIR="/path/to/G_S" ./scripts/run_dev.sh
+  ```
 
 ---
 
-## 预置测试账号与激活码说明
+## 预置账号与激活码
 
-运行 `seed_data.py` 后将生成以下初始测试凭据：
-
-### 1. 管理员与测试账号
-* **管理员**：`admin` / `admin123`（默认解锁全部 `6+` ~ `18+` 分级与服务）
-* **普通账号**：`guest_user` / `user123`（默认仅具备基础 `6+` 分级）
-
-### 2. 测试激活码
-* `PASS-18-UNLIMITED`：**无限次**使用，解锁 `18+` 全部分类与服务。
-* `PASS-15-LIMIT3`：**限制 3 次**使用，解锁 `15+` 分类。
-* `PASS-12-ONETIME`：**单次可用**（使用 1 次后作废），解锁 `12+` 分类。
-* `PASS-APP-SECRET`：**单应用专属**激活码，解锁指定单个私有服务。
-
----
-
-## 生产环境部署（树莓派 5 + Cloudflare）
-
-1. **Systemd 守护运行**：在树莓派上配置 systemd service，实现开机自启与异常自动重启。
-2. **Cloudflare Tunnel 接入**：
-   - 树莓派安装 `cloudflared`，打通安全出网隧道，避免在家庭路由器暴露端口。
-   - 配合后端的 404 伪装，全站具备防嗅探能力。
+- **管理员账号**：`admin` / `admin123`（拥有全部权限与管理中心入口）
+- **测试普通账号**：`guest_user` / `user123`
+- **预置激活码**：
+  - `PASS-18-UNLIMITED`：无限次解锁全部分区
+  - `ONLY-18-INFINITE`：无限次解锁私密专区
+  - `PASS-15-LIMIT3`：限用 3 次，解锁核心网络及以下分区
+  - `PASS-12-ONETIME`：单次有效，解锁云端开发及以下分区

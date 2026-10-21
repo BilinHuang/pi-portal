@@ -2,7 +2,7 @@
 
 Creates or updates:
 - Default users: `admin` (`admin123`) and `guest_user` (`user123`)
-- Pre-configured services with clean, concise names and descriptions
+- Pre-configured services including Story Studio (`story-studio`) and 3-Tier Novel Reader (`novel-reader`)
 - Pre-configured activation codes
 - Default sample announcements & notes for 'pi-status-note'
 """
@@ -74,6 +74,28 @@ def seed():
                 "sort_order": 2,
             },
             {
+                "slug": "story-studio",
+                "name": "小说创作工坊",
+                "description": "Gemini 多密钥流式扩写、剧情承接续写与灵感全篇创作。",
+                "icon": "✍️",
+                "tier": "6+",
+                "target_url": "/apps/story-studio",
+                "open_in_new_tab": False,
+                "status": "active",
+                "sort_order": 3,
+            },
+            {
+                "slug": "novel-reader",
+                "name": "本地小说阅读",
+                "description": "三层目录结构（Epoch / 篇章设定 / 章节正文）沉浸式阅读器。",
+                "icon": "📖",
+                "tier": "6+",
+                "target_url": "/apps/novel-reader",
+                "open_in_new_tab": False,
+                "status": "active",
+                "sort_order": 4,
+            },
+            {
                 "slug": "mac-ai-assistant",
                 "name": "Mac 本地大模型",
                 "description": "挂载于 Mac 节点的 Ollama 本地推理服务。",
@@ -82,7 +104,7 @@ def seed():
                 "target_url": "/apps/mac-ai-assistant",
                 "open_in_new_tab": False,
                 "status": "offline",
-                "sort_order": 3,
+                "sort_order": 5,
             },
             {
                 "slug": "smart-home-hub",
@@ -93,7 +115,7 @@ def seed():
                 "target_url": "/apps/smart-home-hub",
                 "open_in_new_tab": False,
                 "status": "wip",
-                "sort_order": 4,
+                "sort_order": 6,
             },
             {
                 "slug": "family-recipes",
@@ -213,6 +235,7 @@ def seed():
                 existing_svc.description = s_data["description"]
                 existing_svc.status = s_data["status"]
                 existing_svc.is_enabled = s_data["status"] == "active"
+                existing_svc.sort_order = s_data["sort_order"]
 
         # 3. Seed Activation Codes
         codes_data = [
@@ -293,7 +316,7 @@ def seed():
             db.add_all(sample_notes)
 
         db.commit()
-        print("✅ 数据同步与文本清洗完成！")
+        print("✅ 数据同步与服务注册完成！")
     finally:
         db.close()
 

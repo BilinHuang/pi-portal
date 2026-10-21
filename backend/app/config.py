@@ -9,6 +9,16 @@ DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "dashboard.db"
 FRONTEND_DIR = BASE_DIR / "frontend"
 
+# Gemini API Keys directory (supports Gemini1.key, gemini2.key, *.key)
+KEYS_DIR = Path(os.getenv("PORTAL_KEYS_DIR", str(BASE_DIR / "keys")))
+
+# Local 3-Tier Novel Reader root directory (Epoch -> Story/Meta -> Chapters)
+NOVELS_DIR = Path(os.getenv("PORTAL_NOVELS_DIR", str(BASE_DIR / "novels")))
+
+# Story Studio generated outputs directory
+STUDIO_OUTPUT_DIR = DATA_DIR / "studio_outputs"
+STUDIO_INPUT_DIR = DATA_DIR / "studio_inputs"
+
 SECRET_KEY = os.getenv(
     "DASHBOARD_SECRET_KEY",
     "pi5-stealth-dashboard-secret-key-2026-change-in-production",
