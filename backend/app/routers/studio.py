@@ -45,11 +45,8 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
 # Default models list (Gemini Flash Lite / Flash / Pro)
 AVAILABLE_MODELS = [
-    {"id": "gemini-3.5-flash-lite-lite", "label": "Gemini 2.5 Flash Lite (极速轻量)"},
-    {"id": "gemini-3.5-flash-lite", "label": "Gemini 2.5 Flash (主力高性价比)"},
-    {"id": "gemini-3.1-flash-lite", "label": "Gemini 3.1 Flash Lite"},
     {"id": "gemini-3.5-flash-lite", "label": "Gemini 3.5 Flash Lite"},
-    {"id": "gemini-2.5-pro", "label": "Gemini 2.5 Pro (深度长文)"},
+    {"id": "gemini-3.1-flash-lite", "label": "Gemini 3.1 Flash Lite"},
 ]
 
 # Default System Prompts for the 3 modes (auto-loaded in UI, user-editable)
@@ -1309,11 +1306,8 @@ def render_story_studio_app(service: Service, identity: CurrentIdentity) -> str:
         <label for="model-select">Gemini 模型 (支持自定义输入)</label>
         <input list="model-options" id="model-select" value="gemini-3.5-flash-lite" />
         <datalist id="model-options">
-          <option value="gemini-3.5-flash-lite-lite">Gemini 2.5 Flash Lite</option>
-          <option value="gemini-3.5-flash-lite">Gemini 2.5 Flash</option>
-          <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
           <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
-          <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+          <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
         </datalist>
       </div>
 
