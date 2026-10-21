@@ -1,4 +1,4 @@
-"""SQLAlchemy ORM models for Users, Activation Codes, Services, Permission Grants, and Node Notes."""
+"""SQLAlchemy ORM models for Users, Activation Codes, Services, Permission Grants, Notes, and Registration Invites."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -18,18 +18,35 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+    # Stored for admin inspection on personal node
+    password_plain = Column(String(128), nullable=True, default="")
     role = Column(String(20), nullable=False, default="user")  # 'admin' or 'user'
+    # Circle classification tag: '初中', '高中', '大学', '家人', '验证码', '管理员'
+    user_tag = Column(String(32), nullable=False, default="普通")
     created_at = Column(DateTime, default=utc_now, nullable=False)
 
-    # Future AI Rate Limiting & Quotas
+    # AI Rate Limiting & Quotas
     ai_daily_limit = Column(Integer, nullable=False, default=50)  # -1 means unlimited
     ai_used_today = Column(Integer, nullable=False, default=0)
-    ai_rpm_limit = Column(Integer, nullable=False, default=10)    # Requests per minute
+    ai_rpm_limit = Column(Integer, nullable=False, default=10)
     ai_last_reset = Column(DateTime, default=utc_now, nullable=False)
 
     permissions = relationship(
         "PermissionGrant", back_populates="user", cascade="all, delete-orphan"
     )
+
+
+class RegistrationInvite(Base):
+    __tablename__ = "registration_invites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(32), unique=True, nullable=False, index=True)
+    user_tag = Column(String(32), nullable=False, default="验证码")
+    grant_tier = Column(String(32), nullable=False, default="<=9+")
+    is_used = Column(Boolean, nullable=False, default=False)
+    used_by = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
 
 
 class ActivationCode(Base):

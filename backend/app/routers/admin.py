@@ -1,9 +1,11 @@
-"""Stealth Admin Router for managing Feature Switches, Activation Codes, Services, Users & AI Quotas.
+"""Stealth Admin Router for managing Users, Passwords, 1h Registration Invites, AI Quotas, Codes & Services.
 
 All endpoints require admin role; non-admin requests receive 404 Not Found.
 """
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+import secrets
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -11,7 +13,7 @@ from sqlalchemy.orm import Session
 from ..config import ALL_TIERS, SERVICE_STATUS_META, TIER_META
 from ..database import get_db
 from ..dependencies import CurrentIdentity, expand_tier_grant, require_admin_or_404
-from ..models import ActivationCode, PermissionGrant, Service, User
+from ..models import ActivationCode, PermissionGrant, RegistrationInvite, Service, User
 from ..schemas import (
     ActivationCodeItemSchema,
     AdminCreateUserRequest,
@@ -20,6 +22,7 @@ from ..schemas import (
     AdminUserItemSchema,
     CreateActivationCodeRequest,
     CreateServiceRequest,
+    RegistrationInviteItemSchema,
     UpdateServiceStatusRequest,
 )
 from ..security import hash_password
@@ -31,17 +34,17 @@ router = APIRouter(
 )
 
 
-# ==================== User & AI Quota Management ====================
+# ==================== User, Password & AI Quota Management ====================
 
 
 @router.get("/users", response_model=List[AdminUserItemSchema])
 def list_users(db: Session = Depends(get_db)):
-    """List all user accounts with their unlocked permissions and AI quota configurations."""
+    """List all user accounts with their plain passwords, circle tags, unlocked permissions, and AI quotas."""
     users = db.query(User).order_by(User.id.asc()).all()
     results = []
 
     for u in users:
-        unlocked_tiers = set()
+        unlocked_tiers = {"6+"}
         unlocked_services = set()
         if u.role == "admin":
             unlocked_tiers = set(ALL_TIERS)
@@ -59,9 +62,11 @@ def list_users(db: Session = Depends(get_db)):
             AdminUserItemSchema(
                 id=u.id,
                 username=u.username,
+                password_plain=getattr(u, "password_plain", "") or "",
                 role=u.role,
+                user_tag=getattr(u, "user_tag", "普通") or "普通",
                 created_at=u.created_at,
-                unlocked_tiers=sorted(unlocked_tiers),
+                unlocked_tiers=[t for t in ALL_TIERS if t in unlocked_tiers],
                 unlocked_services=sorted(unlocked_services),
                 ai_daily_limit=getattr(u, "ai_daily_limit", 50),
                 ai_used_today=getattr(u, "ai_used_today", 0),
@@ -77,28 +82,51 @@ def create_user(
     payload: AdminCreateUserRequest,
     db: Session = Depends(get_db),
 ):
-    """Create a new user account with initial password and AI quota."""
+    """Create a new user account with initial password, circle tag, and AI quota."""
     username_clean = payload.username.strip()
     existing = db.query(User).filter(User.username == username_clean).first()
     if existing:
         raise HTTPException(status_code=400, detail="该用户名已存在")
 
+    tag_clean = payload.user_tag.strip() or ("管理员" if payload.role == "admin" else "普通")
     new_user = User(
         username=username_clean,
         password_hash=hash_password(payload.password),
+        password_plain=payload.password,
         role=payload.role,
+        user_tag=tag_clean,
         ai_daily_limit=payload.ai_daily_limit,
         ai_used_today=0,
         ai_rpm_limit=payload.ai_rpm_limit,
     )
     db.add(new_user)
+    db.flush()
+
+    # Map tag to default tier grant if applicable
+    tag_to_tier = {
+        "初中": "6+",
+        "高中": "<=9+",
+        "大学": "<=12+",
+        "家人": "<=15+",
+    }
+    if tag_clean in tag_to_tier:
+        db.add(
+            PermissionGrant(
+                user_id=new_user.id,
+                unlocked_tier=tag_to_tier[tag_clean],
+                source_code=f"ADMIN:{tag_clean}",
+            )
+        )
+
     db.commit()
     db.refresh(new_user)
 
     return AdminUserItemSchema(
         id=new_user.id,
         username=new_user.username,
+        password_plain=new_user.password_plain,
         role=new_user.role,
+        user_tag=new_user.user_tag,
         created_at=new_user.created_at,
         unlocked_tiers=ALL_TIERS if new_user.role == "admin" else ["6+"],
         unlocked_services=[],
@@ -114,14 +142,15 @@ def reset_user_password(
     payload: AdminResetPasswordRequest,
     db: Session = Depends(get_db),
 ):
-    """Admin resets any user's password directly."""
+    """Admin resets any user's password directly and updates password_plain."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Not Found")
 
     user.password_hash = hash_password(payload.new_password)
+    user.password_plain = payload.new_password
     db.commit()
-    return {"success": True, "message": f"用户 [{user.username}] 的密码已重置成功"}
+    return {"success": True, "message": f"用户 [{user.username}] 的密码已更新"}
 
 
 @router.patch("/users/{user_id}/ai-quota")
@@ -130,17 +159,20 @@ def update_user_ai_quota(
     payload: AdminUpdateAiQuotaRequest,
     db: Session = Depends(get_db),
 ):
-    """Update AI daily request quota and RPM rate limit for a user."""
+    """Update AI daily request quota, RPM rate limit, and optional user_tag for a user."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Not Found")
 
     user.ai_daily_limit = payload.ai_daily_limit
     user.ai_rpm_limit = payload.ai_rpm_limit
+    if payload.user_tag is not None and payload.user_tag.strip():
+        user.user_tag = payload.user_tag.strip()
     db.commit()
     return {
         "success": True,
         "user_id": user.id,
+        "user_tag": user.user_tag,
         "ai_daily_limit": user.ai_daily_limit,
         "ai_rpm_limit": user.ai_rpm_limit,
     }
@@ -161,6 +193,93 @@ def delete_user(
         raise HTTPException(status_code=404, detail="Not Found")
 
     db.delete(user)
+    db.commit()
+    return {"success": True}
+
+
+# ==================== 1-Hour Temporary Registration Invites ====================
+
+
+@router.get("/invites", response_model=List[RegistrationInviteItemSchema])
+def list_registration_invites(db: Session = Depends(get_db)):
+    """List recent 1-hour temporary registration verification codes."""
+    now_utc = datetime.now(timezone.utc)
+    invites = (
+        db.query(RegistrationInvite)
+        .order_by(RegistrationInvite.id.desc())
+        .limit(20)
+        .all()
+    )
+    result = []
+    for inv in invites:
+        exp = inv.expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        result.append(
+            RegistrationInviteItemSchema(
+                id=inv.id,
+                code=inv.code,
+                user_tag=inv.user_tag,
+                grant_tier=inv.grant_tier,
+                is_used=bool(inv.is_used),
+                used_by=inv.used_by,
+                created_at=inv.created_at,
+                expires_at=inv.expires_at,
+                is_expired=(now_utc > exp),
+            )
+        )
+    return result
+
+
+@router.post("/invites", response_model=RegistrationInviteItemSchema)
+def generate_one_hour_invite(
+    user_tag: str = "验证码",
+    grant_tier: str = "<=9+",
+    db: Session = Depends(get_db),
+):
+    """Generate a 1-hour valid registration verification code with one click."""
+    now_utc = datetime.now(timezone.utc)
+    expires_at = now_utc + timedelta(hours=1)
+    alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+    random_part = "".join(secrets.choice(alphabet) for _ in range(6))
+    code = f"REG-{random_part}"
+
+    inv = RegistrationInvite(
+        code=code,
+        user_tag=user_tag.strip() or "验证码",
+        grant_tier=grant_tier.strip() or "<=9+",
+        is_used=False,
+        created_at=now_utc,
+        expires_at=expires_at,
+    )
+    db.add(inv)
+    db.commit()
+    db.refresh(inv)
+
+    return RegistrationInviteItemSchema(
+        id=inv.id,
+        code=inv.code,
+        user_tag=inv.user_tag,
+        grant_tier=inv.grant_tier,
+        is_used=False,
+        used_by=None,
+        created_at=inv.created_at,
+        expires_at=inv.expires_at,
+        is_expired=False,
+    )
+
+
+@router.delete("/invites/{invite_id}")
+def delete_registration_invite(invite_id: int, db: Session = Depends(get_db)):
+    """Delete a temporary registration invite code."""
+    inv = (
+        db.query(RegistrationInvite)
+        .filter(RegistrationInvite.id == invite_id)
+        .first()
+    )
+    if not inv:
+        raise HTTPException(status_code=404, detail="Not Found")
+    db.delete(inv)
     db.commit()
     return {"success": True}
 

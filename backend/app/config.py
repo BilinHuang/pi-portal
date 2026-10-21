@@ -1,4 +1,4 @@
-"""Global configuration for Pi Stealth Dashboard."""
+"""Global configuration for Pi Stealth Portal."""
 from __future__ import annotations
 
 import os
@@ -18,37 +18,37 @@ SESSION_COOKIE_NAME = "pi_dash_session"
 GUEST_COOKIE_NAME = "pi_dash_guest"
 COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
 
-# Internal permission tiers (kept internal; never explicitly shown as age ratings on UI)
+# Internal permission tiers
 ALL_TIERS = ["6+", "9+", "12+", "15+", "18+"]
 
-# Tiers visible to everyone by default (public visitor baseline)
+# Public baseline tiers
 DEFAULT_PUBLIC_TIERS = ["6+"]
 
-# Neutral category titles (no explicit age tags displayed)
+# Category labels and subtitles
 TIER_META = {
     "6+": {
-        "label": "公共基础服务",
-        "subtitle": "日常工具与公开节点状态",
+        "label": "公共基础",
+        "subtitle": "基础工具与节点状态",
     },
     "9+": {
-        "label": "家庭娱乐与共享",
-        "subtitle": "局域网共享媒体与生活工具",
+        "label": "家庭共享",
+        "subtitle": "共享媒体与生活工具",
     },
     "12+": {
-        "label": "云端存储与开发",
-        "subtitle": "个人相册、代码托管与跨端同步",
+        "label": "云端开发",
+        "subtitle": "个人相册与代码仓库",
     },
     "15+": {
-        "label": "核心网络与安全",
-        "subtitle": "密钥管理、内网穿透与高敏工具",
+        "label": "核心网络",
+        "subtitle": "密码金库与网络隧道",
     },
     "18+": {
-        "label": "私密归档专区",
-        "subtitle": "受限访问与私人加密馆藏",
+        "label": "私密专区",
+        "subtitle": "受限访问与私人归档",
     },
 }
 
-# Service operational status metadata (replaces the old age badge on card top-right)
+# Service operational status metadata
 SERVICE_STATUS_META = {
     "active": {
         "label": "运行中",
@@ -77,3 +77,75 @@ DEFAULT_TIMEZONES = [
     {"id": "tokyo", "city": "东京", "country": "JP", "tz": "Asia/Tokyo"},
     {"id": "sydney", "city": "悉尼", "country": "AU", "tz": "Australia/Sydney"},
 ]
+
+# Registration Security Questions
+REGISTRATION_IDENTITY_QUESTIONS = {
+    "junior_high": {
+        "prompt": "我初中是在哪所学校？",
+        "answers": ["七宝二中", "七宝第二中学", "上海市七宝第二中学"],
+        "user_tag": "初中",
+        "grant_tier": "6+",
+    },
+    "senior_high": {
+        "prompt": "我高中是在哪所学校？",
+        "answers": [
+            "交附嘉分",
+            "交嘉",
+            "绞架",
+            "交大附中嘉定分校",
+            "上海交通大学附属中学嘉定分校",
+        ],
+        "user_tag": "高中",
+        "grant_tier": "<=9+",
+    },
+    "university": {
+        "prompt": "我大学是在哪所学校？",
+        "answers": [
+            "合工大",
+            "肥工",
+            "hfut",
+            "合肥工业大学",
+            "新南威尔士大学",
+            "unsw",
+            "新南",
+            "新南威尔士",
+        ],
+        "user_tag": "大学",
+        "grant_tier": "<=12+",
+    },
+    "nickname": {
+        "prompt": "家里人或发小叫我什么小名？",
+        "answers": ["菜菜"],
+        "user_tag": "家人",
+        "grant_tier": "<=15+",
+    },
+}
+
+REGISTRATION_LIFE_QUESTIONS = {
+    "game": {
+        "prompt": "说出一款我常玩的游戏",
+        "answers": [
+            "都市天际线",
+            "都市天际线1",
+            "都市天际线2",
+            "天际线",
+            "citiesskylines",
+            "csl",
+            "原神",
+            "genshin",
+            "genshinimpact",
+            "明日方舟",
+            "方舟",
+            "粥",
+            "arknights",
+            "狂热运输2",
+            "狂热运输",
+            "transportfever2",
+            "transportfever",
+        ],
+    },
+    "sport": {
+        "prompt": "我常做什么球类运动？",
+        "answers": ["羽毛球", "打羽毛球", "badminton"],
+    },
+}

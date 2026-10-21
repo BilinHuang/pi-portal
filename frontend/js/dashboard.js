@@ -1,9 +1,5 @@
 /**
- * Stealth Dashboard Service Matrix & Admin Feature Switch Renderer
- * - Never displays explicit age ratings (6+, 9+, 12+, 15+, 18+) on the UI.
- * - Replaces the top-right card badge with operational status tags:
- *   '运行中' (green) vs grey tags for '已关闭', '暂不可用' (e.g. Mac offline), and '待开发'.
- * - Renders the Feature Switch Control Panel ONLY when logged in as admin.
+ * Dashboard Service Matrix & Feature Switch Renderer
  */
 const Dashboard = {
   isAdmin: false,
@@ -23,9 +19,11 @@ const Dashboard = {
       this.isAdmin = auth.role === "admin";
 
       const nameEl = document.getElementById("identity-name");
-      const btnLogin = document.getElementById("btn-open-login");
-      const btnLogout = document.getElementById("btn-logout");
-      const btnAdmin = document.getElementById("btn-open-admin");
+      const avatarEl = document.getElementById("capsule-avatar");
+      const menuItemAdmin = document.getElementById("menu-item-admin");
+      const menuItemLogin = document.getElementById("menu-item-login");
+      const menuItemRegister = document.getElementById("menu-item-register");
+      const menuItemLogout = document.getElementById("menu-item-logout");
       const adminSwitchPanel = document.getElementById("admin-switch-panel");
       const footerIp = document.getElementById("footer-ip");
 
@@ -34,27 +32,31 @@ const Dashboard = {
       }
 
       if (auth.is_authenticated) {
-        nameEl.textContent =
-          auth.role === "admin"
-            ? `👑 管理员 (${auth.username})`
-            : `👤 已登录 (${auth.username})`;
-        btnLogin.classList.add("hidden");
-        btnLogout.classList.remove("hidden");
+        if (nameEl) nameEl.textContent = auth.username;
+        if (avatarEl) avatarEl.textContent = auth.role === "admin" ? "👑" : "👤";
+        menuItemLogin?.classList.add("hidden");
+        menuItemRegister?.classList.add("hidden");
+        menuItemLogout?.classList.remove("hidden");
+        menuItemAdmin?.classList.toggle("hidden", auth.role !== "admin");
       } else if (auth.is_guest_activated) {
-        nameEl.textContent = "🎟️ 已授权访问";
-        btnLogin.classList.remove("hidden");
-        btnLogout.classList.remove("hidden");
+        if (nameEl) nameEl.textContent = "已授权访客";
+        if (avatarEl) avatarEl.textContent = "🎟️";
+        menuItemLogin?.classList.remove("hidden");
+        menuItemRegister?.classList.remove("hidden");
+        menuItemLogout?.classList.remove("hidden");
+        menuItemAdmin?.classList.add("hidden");
       } else {
-        nameEl.textContent = "访客模式";
-        btnLogin.classList.remove("hidden");
-        btnLogout.classList.add("hidden");
+        if (nameEl) nameEl.textContent = "访客";
+        if (avatarEl) avatarEl.textContent = "👤";
+        menuItemLogin?.classList.remove("hidden");
+        menuItemRegister?.classList.remove("hidden");
+        menuItemLogout?.classList.add("hidden");
+        menuItemAdmin?.classList.add("hidden");
       }
 
       if (this.isAdmin) {
-        btnAdmin.classList.remove("hidden");
         adminSwitchPanel?.classList.remove("hidden");
       } else {
-        btnAdmin.classList.add("hidden");
         adminSwitchPanel?.classList.add("hidden");
       }
     } catch (err) {
@@ -69,9 +71,9 @@ const Dashboard = {
     try {
       const services = await API.adminListServices();
       const states = [
-        { key: "active", label: "开启" },
+        { key: "active", label: "运行中" },
         { key: "disabled", label: "已关闭" },
-        { key: "offline", label: "暂不可用" },
+        { key: "offline", label: "离线" },
         { key: "wip", label: "待开发" },
       ];
 
@@ -113,7 +115,7 @@ const Dashboard = {
   async setServiceStatus(serviceId, newStatus) {
     try {
       const res = await API.adminUpdateServiceStatus(serviceId, newStatus);
-      showToast(`已将服务状态切换为「${res.status_label}」`);
+      showToast(`状态已切换: ${res.status_label}`);
       await Promise.all([
         this.loadAdminSwitchPanel(),
         this.loadServices(),
@@ -190,7 +192,7 @@ const Dashboard = {
   },
 
   notifyUnavailable(name, statusLabel) {
-    showToast(`「${name}」当前状态为【${statusLabel}】，暂无法访问`);
+    showToast(`「${name}」当前${statusLabel}，暂无法访问`);
   },
 
   escapeHtml(str) {

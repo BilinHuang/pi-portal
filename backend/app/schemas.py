@@ -11,6 +11,16 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=1, max_length=128)
 
 
+class RegisterRequest(BaseModel):
+    username: str = Field(..., min_length=2, max_length=50)
+    password: str = Field(..., min_length=4, max_length=128)
+    q1_key: Optional[str] = Field(default=None, max_length=50)
+    q1_answer: Optional[str] = Field(default=None, max_length=100)
+    q2_key: Optional[str] = Field(default=None, max_length=50)
+    q2_answer: Optional[str] = Field(default=None, max_length=100)
+    invite_code: Optional[str] = Field(default=None, max_length=64)
+
+
 class ActivateCodeRequest(BaseModel):
     code: str = Field(..., min_length=1, max_length=64)
 
@@ -28,6 +38,7 @@ class AuthStatusResponse(BaseModel):
     is_guest_activated: bool
     username: Optional[str] = None
     role: str = "guest"
+    user_tag: Optional[str] = None
     unlocked_tiers: List[str]
     unlocked_services: List[str]
     client_ip: str
@@ -107,7 +118,9 @@ class UpdateServiceStatusRequest(BaseModel):
 class AdminUserItemSchema(BaseModel):
     id: int
     username: str
+    password_plain: Optional[str] = ""
     role: str
+    user_tag: str = "普通"
     created_at: datetime
     unlocked_tiers: List[str]
     unlocked_services: List[str]
@@ -120,6 +133,7 @@ class AdminCreateUserRequest(BaseModel):
     username: str = Field(..., min_length=1, max_length=50)
     password: str = Field(..., min_length=1, max_length=128)
     role: str = Field(default="user", pattern=r"^(admin|user)$")
+    user_tag: str = Field(default="手动创建", max_length=32)
     ai_daily_limit: int = Field(default=50, ge=-1)
     ai_rpm_limit: int = Field(default=10, ge=1)
 
@@ -131,3 +145,16 @@ class AdminResetPasswordRequest(BaseModel):
 class AdminUpdateAiQuotaRequest(BaseModel):
     ai_daily_limit: int = Field(..., ge=-1)
     ai_rpm_limit: int = Field(default=10, ge=1)
+    user_tag: Optional[str] = Field(default=None, max_length=32)
+
+
+class RegistrationInviteItemSchema(BaseModel):
+    id: int
+    code: str
+    user_tag: str
+    grant_tier: str
+    is_used: bool
+    used_by: Optional[str]
+    created_at: datetime
+    expires_at: datetime
+    is_expired: bool

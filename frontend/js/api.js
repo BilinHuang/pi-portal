@@ -26,6 +26,17 @@ const API = {
     return this.request("/api/auth/me");
   },
 
+  getRegisterQuestions() {
+    return this.request("/api/auth/register-questions");
+  },
+
+  register(payload) {
+    return this.request("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
   login(username, password) {
     return this.request("/api/auth/login", {
       method: "POST",
@@ -96,6 +107,23 @@ const API = {
 
   adminDeleteUser(userId) {
     return this.request(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+    });
+  },
+
+  adminListInvites() {
+    return this.request("/api/admin/invites");
+  },
+
+  adminGenerateInvite(user_tag = "验证码", grant_tier = "<=9+") {
+    return this.request(
+      `/api/admin/invites?user_tag=${encodeURIComponent(user_tag)}&grant_tier=${encodeURIComponent(grant_tier)}`,
+      { method: "POST" }
+    );
+  },
+
+  adminDeleteInvite(inviteId) {
+    return this.request(`/api/admin/invites/${inviteId}`, {
       method: "DELETE",
     });
   },

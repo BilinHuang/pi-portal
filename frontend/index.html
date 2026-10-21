@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pi 5 Center — Control Portal</title>
+  <title>Pi 5 Portal</title>
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
-  <div class="bg-glow bg-glow-1"></div>
-  <div class="bg-glow bg-glow-2"></div>
-
   <div class="app-shell">
     <!-- Top Header -->
     <header class="top-nav">
@@ -19,38 +16,46 @@
           <h1 class="brand-title">Pi 5 Control Center</h1>
           <div class="brand-meta" id="system-pill">
             <span class="status-dot"></span>
-            <span id="sys-platform-text">正在连接节点...</span>
+            <span id="sys-platform-text">已连接</span>
           </div>
         </div>
       </div>
 
+      <!-- Right Nav Actions: Consolidated into a single clickable Capsule -->
       <div class="nav-actions">
-        <div class="identity-bar" id="identity-bar">
-          <span class="identity-label" id="identity-name">访客模式</span>
+        <div class="user-menu-wrap" id="user-menu-wrap">
+          <button type="button" class="identity-capsule" id="identity-capsule" aria-haspopup="true" aria-expanded="false">
+            <span class="capsule-avatar" id="capsule-avatar">👤</span>
+            <span class="capsule-name" id="identity-name">访客</span>
+            <span class="capsule-arrow">▾</span>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div class="user-dropdown-menu hidden" id="user-dropdown-menu">
+            <button type="button" class="dropdown-item" id="menu-item-activate">
+              <span>🔑</span> 输入激活码
+            </button>
+            <button type="button" class="dropdown-item hidden" id="menu-item-admin">
+              <span>⚙️</span> 管理中心
+            </button>
+            <button type="button" class="dropdown-item" id="menu-item-login">
+              <span>👤</span> 登录
+            </button>
+            <button type="button" class="dropdown-item" id="menu-item-register">
+              <span>✨</span> 注册
+            </button>
+            <button type="button" class="dropdown-item hidden" id="menu-item-logout" style="color:#fb7185;">
+              <span>🚪</span> 退出登录
+            </button>
+          </div>
         </div>
-
-        <button class="btn btn-accent" id="btn-open-activate" title="输入激活码解锁隐藏功能或专区">
-          🔑 激活码兑换
-        </button>
-
-        <button class="btn btn-outline hidden" id="btn-open-admin">
-          ⚙️ 节点管理中心
-        </button>
-
-        <button class="btn btn-outline" id="btn-open-login">
-          👤 账号登录
-        </button>
-
-        <button class="btn btn-ghost hidden" id="btn-logout" title="退出账号或清除本地激活缓存">
-          退出
-        </button>
       </div>
     </header>
 
-    <!-- World Clock Widget Section (Shanghai, Tokyo, Sydney) -->
-    <section class="widget-section" aria-label="多地实时时钟">
+    <!-- World Clock Widget Section -->
+    <section class="widget-section" aria-label="多地时钟">
       <div class="section-header-compact">
-        <span class="section-tag">🌍 多地实时时钟 (World Clock)</span>
+        <span class="section-tag">多地时钟</span>
         <span class="section-hint" id="telemetry-summary"></span>
       </div>
       <div class="clock-grid" id="clock-grid">
@@ -58,54 +63,49 @@
       </div>
     </section>
 
-    <!-- Admin-Only Feature Switch Center (Hidden for non-admins) -->
-    <section class="admin-switch-panel hidden" id="admin-switch-panel" aria-label="管理员功能开关控制台">
+    <!-- Admin Feature Switch Center -->
+    <section class="admin-switch-panel hidden" id="admin-switch-panel" aria-label="服务状态开关">
       <div class="admin-switch-header">
         <div>
-          <span class="admin-switch-badge">👑 Admin 专属</span>
-          <h2 class="admin-switch-title">功能状态与节点开关控制台</h2>
+          <span class="admin-switch-badge">管理员</span>
+          <h2 class="admin-switch-title">服务状态开关</h2>
           <p class="admin-switch-subtitle">
-            实时控制全部功能卡片的运行状态（切换为「已关闭」「暂不可用 / Mac离线」或「待开发」后，卡片右上角将变更为对应的灰色状态标签并禁止跳转）。
+            控制各服务开放状态（关闭、离线或待开发的服务卡片置灰并禁止跳转）。
           </p>
         </div>
         <button class="btn btn-outline" id="btn-toggle-switch-grid">收起 / 展开</button>
       </div>
       <div class="admin-switch-grid" id="admin-switch-grid">
-        <!-- Populated dynamically by dashboard.js when logged in as admin -->
+        <!-- Populated dynamically by dashboard.js -->
       </div>
     </section>
 
-    <!-- Dynamic Stealth Services Section -->
+    <!-- Dynamic Services Section -->
     <main class="services-container" id="services-container">
-      <!-- Populated dynamically by dashboard.js; locked categories are completely absent -->
+      <!-- Populated dynamically by dashboard.js -->
     </main>
 
     <footer class="footer">
-      <span>Raspberry Pi 5 Node</span>
+      <span>Raspberry Pi 5</span>
       <span class="dot-sep">·</span>
       <span id="footer-ip">IP: --</span>
       <span class="dot-sep">·</span>
-      <span>SQLite WAL Mode</span>
+      <span>SQLite WAL</span>
     </footer>
   </div>
 
-  <!-- Modal: Activation Code Redemption -->
+  <!-- Modal: Activation Code -->
   <div class="modal-backdrop hidden" id="modal-activate">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>🔑 输入通行激活码</h3>
+        <h3>输入激活码</h3>
         <button class="modal-close" data-close="modal-activate">✕</button>
       </div>
-      <p class="modal-subtitle">
-        支持未登录访客直接激活（写入安全本地凭据）或登录账号后永久绑定。支持单服务解锁或分区解锁。
-      </p>
       <form id="form-activate">
-        <div class="form-group">
-          <label for="input-activation-code">激活码 / 口令</label>
+        <div class="form-group" style="margin-top:0.75rem;">
           <input
             type="text"
             id="input-activation-code"
-            placeholder="例如: PASS-18-UNLIMITED"
             autocomplete="off"
             required
           />
@@ -113,66 +113,169 @@
         <div class="form-feedback hidden" id="activate-feedback"></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-close="modal-activate">取消</button>
-          <button type="submit" class="btn btn-accent">立即验证解锁</button>
+          <button type="submit" class="btn btn-accent">确认</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Account Login -->
+  <!-- Modal: Login -->
   <div class="modal-backdrop hidden" id="modal-login">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>👤 账号登录</h3>
+        <h3>账号登录</h3>
         <button class="modal-close" data-close="modal-login">✕</button>
       </div>
-      <p class="modal-subtitle">
-        登录后自动同步账号绑定的服务权限与专属 AI 调用额度。
-      </p>
-      <form id="form-login">
+      <form id="form-login" style="margin-top:0.75rem;">
         <div class="form-group">
           <label for="input-username">用户名</label>
-          <input type="text" id="input-username" placeholder="用户名" autocomplete="username" required />
+          <input type="text" id="input-username" autocomplete="username" required />
         </div>
         <div class="form-group">
           <label for="input-password">密码</label>
-          <input type="password" id="input-password" placeholder="密码" autocomplete="current-password" required />
+          <input type="password" id="input-password" autocomplete="current-password" required />
         </div>
         <div class="form-feedback hidden" id="login-feedback"></div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" data-close="modal-login">取消</button>
-          <button type="submit" class="btn btn-accent">登录</button>
+        <div class="modal-actions" style="justify-content:space-between;align-items:center;">
+          <span class="subtle-switch-link" id="link-to-register">没有账号？前往注册</span>
+          <div style="display:flex;gap:0.5rem;">
+            <button type="button" class="btn btn-ghost" data-close="modal-login">取消</button>
+            <button type="submit" class="btn btn-accent">登录</button>
+          </div>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Admin Panel (Only accessible when logged in as admin) -->
+  <!-- Modal: Registration -->
+  <div class="modal-backdrop hidden" id="modal-register">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>验证注册</h3>
+        <button class="modal-close" data-close="modal-register">✕</button>
+      </div>
+      <form id="form-register" style="margin-top:0.75rem;">
+        <div class="reg-row-2">
+          <div class="form-group">
+            <label for="reg-username">用户名</label>
+            <input type="text" id="reg-username" autocomplete="off" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-password">密码</label>
+            <input type="password" id="reg-password" autocomplete="new-password" required />
+          </div>
+        </div>
+
+        <div id="reg-questions-area">
+          <!-- Question 1 -->
+          <div class="form-group">
+            <label for="reg-q1-select">验证问题一</label>
+            <select id="reg-q1-select" class="reg-select">
+              <option value="">-- 选择问题一 --</option>
+            </select>
+            <div class="reg-answer-wrap hidden" id="reg-q1-answer-wrap">
+              <input
+                type="text"
+                id="reg-q1-answer"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <!-- Question 2 -->
+          <div class="form-group">
+            <label for="reg-q2-select">验证问题二</label>
+            <select id="reg-q2-select" class="reg-select">
+              <option value="">-- 选择问题二 --</option>
+            </select>
+            <div class="reg-answer-wrap hidden" id="reg-q2-answer-wrap">
+              <input
+                type="text"
+                id="reg-q2-answer"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-feedback hidden" id="register-feedback"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close="modal-register">取消</button>
+          <button type="submit" class="btn btn-accent">注册</button>
+        </div>
+
+        <!-- Bottom subtle grey invite line -->
+        <div class="reg-invite-footer">
+          <span class="reg-invite-grey-link" id="btn-toggle-reg-invite">
+            使用临时验证码注册
+          </span>
+          <div class="reg-invite-input-wrap hidden" id="reg-invite-input-wrap">
+            <input
+              type="text"
+              id="reg-invite-code"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Panel -->
   <div class="modal-backdrop hidden" id="modal-admin">
     <div class="modal-card modal-wide">
       <div class="modal-header">
-        <h3>⚙️ 节点管理中心 (Admin Only)</h3>
+        <h3>管理中心</h3>
         <button class="modal-close" data-close="modal-admin">✕</button>
       </div>
 
       <div class="admin-tabs">
-        <button class="admin-tab active" data-tab="tab-users">👤 用户与 AI 配额</button>
-        <button class="admin-tab" data-tab="tab-codes">🔑 激活码管理</button>
-        <button class="admin-tab" data-tab="tab-services">📦 应用与服务管理</button>
+        <button class="admin-tab active" data-tab="tab-users">用户管理</button>
+        <button class="admin-tab" data-tab="tab-codes">激活码</button>
+        <button class="admin-tab" data-tab="tab-services">服务管理</button>
       </div>
 
-      <!-- Tab 1: User & AI Quota Management -->
+      <!-- Tab 1: User Management -->
       <div class="admin-tab-pane" id="tab-users">
+        <div class="admin-invite-bar">
+          <div class="admin-invite-bar-left">
+            <span class="admin-invite-title">临时注册码（1小时有效）</span>
+            <span class="admin-invite-desc">生成临时注册码供免问答注册。</span>
+          </div>
+          <div class="admin-invite-bar-actions">
+            <select id="invite-tag-select" class="admin-select-sm">
+              <option value="初中">初中</option>
+              <option value="高中">高中</option>
+              <option value="大学" selected>大学</option>
+              <option value="家人">家人</option>
+              <option value="验证码">验证码</option>
+            </select>
+            <button type="button" class="btn btn-accent" id="btn-generate-invite">
+              + 生成临时码
+            </button>
+          </div>
+        </div>
+
+        <div class="admin-invites-list" id="admin-invites-list"></div>
+
         <form class="admin-inline-form" id="form-create-user" style="margin-bottom:1rem;">
-          <input type="text" id="new-user-name" placeholder="新用户名" required />
-          <input type="password" id="new-user-pwd" placeholder="初始密码" required />
-          <select id="new-user-role">
-            <option value="user" selected>普通用户 (User)</option>
-            <option value="admin">管理员 (Admin)</option>
+          <input type="text" id="new-user-name" placeholder="用户名" required />
+          <input type="text" id="new-user-pwd" placeholder="初始密码" required />
+          <select id="new-user-tag">
+            <option value="初中">初中</option>
+            <option value="高中">高中</option>
+            <option value="大学" selected>大学</option>
+            <option value="家人">家人</option>
+            <option value="普通">普通</option>
           </select>
-          <input type="number" id="new-user-ai-daily" placeholder="每日AI额度 (-1无限)" value="50" min="-1" required />
-          <input type="number" id="new-user-ai-rpm" placeholder="RPM频率 (次/分)" value="10" min="1" required />
-          <button type="submit" class="btn btn-accent">+ 创建账号</button>
+          <select id="new-user-role">
+            <option value="user" selected>普通用户</option>
+            <option value="admin">管理员</option>
+          </select>
+          <input type="number" id="new-user-ai-daily" placeholder="每日配额 (-1无限)" value="50" min="-1" required />
+          <input type="number" id="new-user-ai-rpm" placeholder="RPM (次/分)" value="10" min="1" required />
+          <button type="submit" class="btn btn-outline">+ 创建用户</button>
         </form>
 
         <div class="admin-table-wrap">
@@ -180,10 +283,11 @@
             <thead>
               <tr>
                 <th>用户名</th>
+                <th>分类</th>
                 <th>角色</th>
-                <th>AI 每日配额与今日调用</th>
-                <th>频率上限 (RPM)</th>
-                <th>密码管理</th>
+                <th>密码</th>
+                <th>AI 配额 (已用 / 每日上限)</th>
+                <th>RPM</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -195,12 +299,12 @@
       <!-- Tab 2: Activation Codes -->
       <div class="admin-tab-pane hidden" id="tab-codes">
         <form class="admin-inline-form" id="form-create-code">
-          <input type="text" id="new-code-str" placeholder="激活码 (如 VIP-PASS-888)" required />
-          <input type="text" id="new-code-tier" placeholder="内部权限组 (如 18+ / <=15+ / *)" />
-          <input type="text" id="new-code-slug" placeholder="或单服务slug (可选)" />
+          <input type="text" id="new-code-str" placeholder="激活码" required />
+          <input type="text" id="new-code-tier" placeholder="权限组" />
+          <input type="text" id="new-code-slug" placeholder="单服务 slug (可选)" />
           <input type="number" id="new-code-max" placeholder="次数 (-1为无限)" value="-1" min="-1" required />
           <input type="text" id="new-code-desc" placeholder="备注说明" />
-          <button type="submit" class="btn btn-accent">+ 新建激活码</button>
+          <button type="submit" class="btn btn-accent">+ 创建激活码</button>
         </form>
         <div class="admin-table-wrap">
           <table class="admin-table">
@@ -208,7 +312,7 @@
               <tr>
                 <th>激活码</th>
                 <th>解锁权限组</th>
-                <th>解锁单应用</th>
+                <th>单应用</th>
                 <th>已用 / 上限</th>
                 <th>说明</th>
                 <th>操作</th>
@@ -222,35 +326,35 @@
       <!-- Tab 3: Services -->
       <div class="admin-tab-pane hidden" id="tab-services">
         <form class="admin-inline-form" id="form-create-service">
-          <input type="text" id="new-svc-slug" placeholder="英文标识 slug" required />
-          <input type="text" id="new-svc-name" placeholder="应用名称" required />
-          <input type="text" id="new-svc-icon" placeholder="图标 Emoji" value="⚡" />
-          <select id="new-svc-tier" title="内部访问权限级别（前台不展示年龄字样）">
-            <option value="6+">公共基础组 (Lv.1)</option>
-            <option value="9+">家庭共享组 (Lv.2)</option>
-            <option value="12+">云端开发组 (Lv.3)</option>
-            <option value="15+">核心网络组 (Lv.4)</option>
-            <option value="18+">私密归档组 (Lv.5)</option>
+          <input type="text" id="new-svc-slug" placeholder="英文 slug" required />
+          <input type="text" id="new-svc-name" placeholder="服务名称" required />
+          <input type="text" id="new-svc-icon" placeholder="图标" value="⚡" />
+          <select id="new-svc-tier">
+            <option value="6+">公共基础 (Lv.1)</option>
+            <option value="9+">家庭共享 (Lv.2)</option>
+            <option value="12+">云端开发 (Lv.3)</option>
+            <option value="15+">核心网络 (Lv.4)</option>
+            <option value="18+">私密专区 (Lv.5)</option>
           </select>
-          <select id="new-svc-status" title="初始运行状态">
+          <select id="new-svc-status">
             <option value="active">运行中</option>
             <option value="disabled">已关闭</option>
-            <option value="offline">暂不可用 (Mac离线)</option>
+            <option value="offline">暂不可用</option>
             <option value="wip">待开发</option>
           </select>
-          <input type="text" id="new-svc-url" placeholder="跳转 URL (如 https://... 或 /apps/xxx)" required />
-          <input type="text" id="new-svc-desc" placeholder="应用简述" />
+          <input type="text" id="new-svc-url" placeholder="跳转 URL" required />
+          <input type="text" id="new-svc-desc" placeholder="简介" />
           <button type="submit" class="btn btn-accent">+ 添加服务</button>
         </form>
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead>
               <tr>
-                <th>所属分组</th>
+                <th>分组</th>
                 <th>名称</th>
                 <th>Slug</th>
-                <th>当前状态</th>
-                <th>跳转目标 URL</th>
+                <th>状态</th>
+                <th>目标 URL</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -261,7 +365,6 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
   <div class="toast hidden" id="toast"></div>
 
   <script src="/static/js/api.js"></script>

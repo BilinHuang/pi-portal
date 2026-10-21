@@ -47,10 +47,22 @@ def ensure_schema_migrations():
                     )
                 )
 
-        # 2. Users table migrations for AI Rate Limits & Quotas
+        # 2. Users table migrations for Password Inspection, User Tag & AI Quotas
         user_rows = conn.execute(text("PRAGMA table_info(users);")).fetchall()
         if user_rows:
             user_cols = {r[1] for r in user_rows}
+            if "password_plain" not in user_cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN password_plain VARCHAR(128) DEFAULT '';"
+                    )
+                )
+            if "user_tag" not in user_cols:
+                conn.execute(
+                    text(
+                        "ALTER TABLE users ADD COLUMN user_tag VARCHAR(32) NOT NULL DEFAULT '普通';"
+                    )
+                )
             if "ai_daily_limit" not in user_cols:
                 conn.execute(
                     text(

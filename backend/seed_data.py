@@ -1,9 +1,9 @@
 """Database seeding script for Pi Stealth Portal.
 
 Creates or updates:
-- Default users: `admin` (password: `admin123`) and `guest_user` (password: `user123`)
-- Pre-configured services with operational status tags ('active', 'disabled', 'offline', 'wip')
-- Pre-configured activation codes (infinite uses, limited count uses, single-service unlock)
+- Default users: `admin` (`admin123`) and `guest_user` (`user123`)
+- Pre-configured services with clean, concise names and descriptions
+- Pre-configured activation codes
 - Default sample announcements & notes for 'pi-status-note'
 """
 from __future__ import annotations
@@ -28,26 +28,33 @@ def seed():
     try:
         # 1. Seed Users
         users_data = [
-            ("admin", "admin123", "admin"),
-            ("guest_user", "user123", "user"),
+            ("admin", "admin123", "admin", "管理员"),
+            ("guest_user", "user123", "user", "测试"),
         ]
-        for username, pwd, role in users_data:
+        for username, pwd, role, tag in users_data:
             existing_user = db.query(User).filter(User.username == username).first()
             if not existing_user:
                 db.add(
                     User(
                         username=username,
                         password_hash=hash_password(pwd),
+                        password_plain=pwd,
                         role=role,
+                        user_tag=tag,
                     )
                 )
+            else:
+                if not getattr(existing_user, "password_plain", None):
+                    existing_user.password_plain = pwd
+                if getattr(existing_user, "user_tag", "普通") in (None, "", "普通"):
+                    existing_user.user_tag = tag
 
-        # 2. Seed Services across internal tiers with realistic operational statuses
+        # 2. Seed Services across internal tiers
         services_data = [
             {
                 "slug": "pi-status-note",
-                "name": "节点公告与便签",
-                "description": "树莓派公开运行日志、局域网常用备忘录、待办事项与常用命令速记。",
+                "name": "公告与便签",
+                "description": "运行公告、备忘录与常用命令速记。",
                 "icon": "📋",
                 "tier": "6+",
                 "target_url": "/apps/pi-status-note",
@@ -57,8 +64,8 @@ def seed():
             },
             {
                 "slug": "speedtest-node",
-                "name": "服务器时间、延迟与测速",
-                "description": "测量本机到树莓派服务器的时钟同步偏差、网络往返延迟 (Ping/抖动) 与上下行带宽速度。",
+                "name": "连接测速",
+                "description": "服务器时钟偏差、往返延迟与上下行速率。",
                 "icon": "🚀",
                 "tier": "6+",
                 "target_url": "/apps/speedtest-node",
@@ -68,8 +75,8 @@ def seed():
             },
             {
                 "slug": "mac-ai-assistant",
-                "name": "Mac 本地大模型推理端",
-                "description": "挂载于 Mac 节点的 Ollama 本地推理服务（当 Mac 休眠或离线时暂不可用）。",
+                "name": "Mac 本地大模型",
+                "description": "挂载于 Mac 节点的 Ollama 本地推理服务。",
                 "icon": "🧠",
                 "tier": "6+",
                 "target_url": "/apps/mac-ai-assistant",
@@ -79,8 +86,8 @@ def seed():
             },
             {
                 "slug": "smart-home-hub",
-                "name": "传感器与家居联动面板",
-                "description": "树莓派 GPIO 温湿度传感器与自动化规则编排（规划中尚未编写）。",
+                "name": "智能家居",
+                "description": "传感器监控与自动化规则编排。",
                 "icon": "🏡",
                 "tier": "6+",
                 "target_url": "/apps/smart-home-hub",
@@ -90,8 +97,8 @@ def seed():
             },
             {
                 "slug": "family-recipes",
-                "name": "共享菜谱与采购清单",
-                "description": "日常采购清单与家庭菜谱归档服务。",
+                "name": "家庭菜谱",
+                "description": "日常采购清单与菜谱归档。",
                 "icon": "🍲",
                 "tier": "9+",
                 "target_url": "/apps/family-recipes",
@@ -101,8 +108,8 @@ def seed():
             },
             {
                 "slug": "music-stream",
-                "name": "Navidrome 音乐电台",
-                "description": "树莓派自建无损音乐流媒体服务器，支持多端在线播放。",
+                "name": "音乐串流",
+                "description": "Navidrome 无损音乐服务器。",
                 "icon": "🎵",
                 "tier": "9+",
                 "target_url": "/apps/music-stream",
@@ -112,8 +119,8 @@ def seed():
             },
             {
                 "slug": "immich-photos",
-                "name": "Immich 私有云相册",
-                "description": "个人手机照片自动备份与时间线检索相册。",
+                "name": "私有相册",
+                "description": "手机照片自动备份与时间线检索。",
                 "icon": "🖼️",
                 "tier": "12+",
                 "target_url": "/apps/immich-photos",
@@ -123,8 +130,8 @@ def seed():
             },
             {
                 "slug": "mac-video-transcode",
-                "name": "Mac 远程渲染与转码集群",
-                "description": "调用 Mac Apple Silicon 硬件编码器处理视频任务（需 Mac 在线）。",
+                "name": "Mac 媒体转码",
+                "description": "调用 Mac 硬件编码器处理视频转码任务。",
                 "icon": "🎞️",
                 "tier": "12+",
                 "target_url": "/apps/mac-video-transcode",
@@ -134,8 +141,8 @@ def seed():
             },
             {
                 "slug": "gitea-git",
-                "name": "Gitea 私有代码仓库",
-                "description": "运行在树莓派上的轻量级 Git 代码托管与 CI 节点。",
+                "name": "代码仓库",
+                "description": "轻量 Git 代码托管与 CI 节点。",
                 "icon": "🦊",
                 "tier": "12+",
                 "target_url": "/apps/gitea-git",
@@ -145,8 +152,8 @@ def seed():
             },
             {
                 "slug": "vaultwarden",
-                "name": "Vaultwarden 密码金库",
-                "description": "高敏个人密码管理器与双重验证密钥托管中心。",
+                "name": "密码金库",
+                "description": "个人密码管理与双重验证。",
                 "icon": "🔐",
                 "tier": "15+",
                 "target_url": "/apps/vaultwarden",
@@ -156,8 +163,8 @@ def seed():
             },
             {
                 "slug": "wireguard-panel",
-                "name": "内网穿透与隧道控制台",
-                "description": "回家隧道、Cloudflare Tunnel 路由规则与节点防火墙配置。",
+                "name": "网络隧道",
+                "description": "Cloudflare 隧道与防火墙配置。",
                 "icon": "🛡️",
                 "tier": "15+",
                 "target_url": "/apps/wireguard-panel",
@@ -167,8 +174,8 @@ def seed():
             },
             {
                 "slug": "midnight-cinema",
-                "name": "深夜私人影院",
-                "description": "加密挂载的私人 4K 媒体库，仅对持有授权的会话可见。",
+                "name": "私人影院",
+                "description": "私人 4K 流媒体库。",
                 "icon": "🎬",
                 "tier": "18+",
                 "target_url": "/apps/midnight-cinema",
@@ -178,8 +185,8 @@ def seed():
             },
             {
                 "slug": "secret-archive",
-                "name": "绝密离线归档仓",
-                "description": "受限访问的加密文档与私人收藏库，未授权访问直接返回 404。",
+                "name": "私密归档",
+                "description": "受限访问的加密文档与离线归档仓。",
                 "icon": "🗄️",
                 "tier": "18+",
                 "target_url": "/apps/secret-archive",
@@ -204,43 +211,42 @@ def seed():
                 existing_svc.icon = s_data["icon"]
                 existing_svc.name = s_data["name"]
                 existing_svc.description = s_data["description"]
-                if getattr(existing_svc, "status", None) in (None, "active"):
-                    existing_svc.status = s_data["status"]
-                    existing_svc.is_enabled = s_data["status"] == "active"
+                existing_svc.status = s_data["status"]
+                existing_svc.is_enabled = s_data["status"] == "active"
 
         # 3. Seed Activation Codes
         codes_data = [
             {
                 "code": "PASS-18-UNLIMITED",
-                "description": "无限次全功能通行码（解锁全部隐藏分区）",
+                "description": "全功能通行码（解锁全部分区）",
                 "grant_tier": "*",
                 "grant_service_slug": None,
                 "max_uses": -1,
             },
             {
                 "code": "ONLY-18-INFINITE",
-                "description": "无限次私密专区激活码（单独解锁最高私密分区）",
+                "description": "私密专区激活码",
                 "grant_tier": "18+",
                 "grant_service_slug": None,
                 "max_uses": -1,
             },
             {
                 "code": "PASS-15-LIMIT3",
-                "description": "限用 3 次：解锁日常、云端与核心网络分区",
+                "description": "限用 3 次：日常、云端与核心网络",
                 "grant_tier": "<=15+",
                 "grant_service_slug": None,
                 "max_uses": 3,
             },
             {
                 "code": "PASS-12-ONETIME",
-                "description": "单次激活码：解锁日常共享与云端存储分区（用完即止）",
+                "description": "单次激活码：日常与云端开发",
                 "grant_tier": "<=12+",
                 "grant_service_slug": None,
                 "max_uses": 1,
             },
             {
                 "code": "PASS-APP-SECRET",
-                "description": "限用 5 次：仅单独解锁『深夜私人影院』单个应用",
+                "description": "限用 5 次：仅解锁『私人影院』",
                 "grant_tier": None,
                 "grant_service_slug": "midnight-cinema",
                 "max_uses": 5,
@@ -256,28 +262,28 @@ def seed():
             if not existing_code:
                 db.add(ActivationCode(**c_data))
 
-        # 4. Seed initial sample Notes if empty
+        # 4. Seed sample Notes
         if db.query(Note).count() == 0:
             sample_notes = [
                 Note(
-                    title="🍓 树莓派 5 节点运行与维护说明",
-                    content="当前节点已开启 SQLite WAL 低磨损模式并配置 Systemd 守护进程。\n公网流量近期将切换至 Cloudflare Tunnel，届时无需路由器端口映射即可全站 HTTPS 访问。",
+                    title="树莓派节点运行说明",
+                    content="节点运行于 SQLite WAL 模式与 Systemd 守护进程。\n公网访问近期将切换至 Cloudflare Tunnel。",
                     category="bulletin",
                     priority="info",
                     is_pinned=True,
                     author="admin",
                 ),
                 Note(
-                    title="树莓派常用运维命令速查",
-                    content="# 查看服务状态\nsudo systemctl status pi-dashboard\n\n# 拉取更新并自动热重载\ncd ~/Documents/WebApp/portal && git pull",
+                    title="常用运维命令",
+                    content="sudo systemctl status pi-dashboard\ncd ~/Documents/WebApp/portal && git pull",
                     category="code",
                     priority="normal",
                     is_pinned=True,
                     author="admin",
                 ),
                 Note(
-                    title="近期节点待办事项",
-                    content="1. 配置 Cloudflare Tunnel 绑定主域名\n2. 将 Reachy Mini 本地控制面板拆分至独立仓库\n3. 测试内网千兆测速模块稳定性",
+                    title="近期待办",
+                    content="1. 配置 Cloudflare Tunnel 域名绑定\n2. 调试内网测速模块稳定性",
                     category="todo",
                     priority="normal",
                     is_pinned=False,
@@ -287,7 +293,7 @@ def seed():
             db.add_all(sample_notes)
 
         db.commit()
-        print("✅ 数据库结构升级与测试数据同步完成！")
+        print("✅ 数据同步与文本清洗完成！")
     finally:
         db.close()
 

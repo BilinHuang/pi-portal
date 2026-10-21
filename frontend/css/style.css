@@ -114,27 +114,99 @@ body {
 .nav-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 0.65rem;
 }
 
-.identity-bar {
-  display: flex;
+/* Capsule User Menu & Dropdown */
+.user-menu-wrap {
+  position: relative;
+}
+
+.identity-capsule {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
-  font-size: 0.82rem;
-}
-
-.identity-label {
+  padding: 0.42rem 0.92rem;
+  border-radius: 999px;
   color: var(--text-main);
-  font-weight: 500;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
 }
 
-/* Service Top-Right Status Tags (replaces age badges) */
+.identity-capsule:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--border-highlight);
+  transform: translateY(-1px);
+}
+
+.capsule-avatar {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.capsule-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.capsule-arrow {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.user-menu-wrap.open .capsule-arrow {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  min-width: 165px;
+  padding: 0.35rem;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeIn 0.15s ease;
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 0.83rem;
+  font-weight: 500;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* Service Top-Right Status Tags */
 .status-tag {
   display: inline-flex;
   align-items: center;
@@ -148,14 +220,12 @@ body {
   flex-shrink: 0;
 }
 
-/* Active running tag */
 .status-tag-active {
   background: rgba(16, 185, 129, 0.14);
   color: #34d399;
   border: 1px solid rgba(16, 185, 129, 0.32);
 }
 
-/* Three distinct grey status tags for Closed, Offline (Mac offline), and WIP (Unwritten) */
 .status-tag-disabled {
   background: rgba(100, 116, 139, 0.16);
   color: #94a3b8;
@@ -172,6 +242,46 @@ body {
   background: rgba(51, 65, 85, 0.28);
   color: #64748b;
   border: 1px dotted rgba(100, 116, 139, 0.4);
+}
+
+/* Circle Tag Badges in Admin */
+.circle-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.circle-junior {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.32);
+}
+
+.circle-senior {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.32);
+}
+
+.circle-uni {
+  background: rgba(168, 85, 247, 0.16);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.circle-family {
+  background: rgba(244, 63, 94, 0.16);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+}
+
+.circle-default {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.28);
 }
 
 /* Buttons */
@@ -220,13 +330,30 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.btn-action {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 0.22rem 0.52rem;
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action:hover {
+  color: #fff;
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.12);
+}
+
 .btn-danger-sm {
   background: rgba(244, 63, 94, 0.15);
   color: #fb7185;
   border: 1px solid rgba(244, 63, 94, 0.3);
-  padding: 0.25rem 0.6rem;
+  padding: 0.22rem 0.55rem;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   cursor: pointer;
 }
 
@@ -506,7 +633,6 @@ body {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
-/* Muted grey card styling when feature is closed, offline, or WIP */
 .service-card.service-card-unavailable {
   background: rgba(15, 23, 42, 0.42);
   border-color: rgba(255, 255, 255, 0.05);
@@ -589,13 +715,13 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
   padding: 1.5rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
 .modal-wide {
-  max-width: 900px;
+  max-width: 960px;
 }
 
 .modal-header {
@@ -616,11 +742,17 @@ body {
 .modal-subtitle {
   font-size: 0.83rem;
   color: var(--text-muted);
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.15rem;
+}
+
+.reg-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 0.95rem;
 }
 
 .form-group label {
@@ -631,20 +763,74 @@ body {
 }
 
 .form-group input,
+.reg-select,
 .admin-inline-form input,
-.admin-inline-form select {
+.admin-inline-form select,
+.admin-select-sm {
   width: 100%;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
-  padding: 0.6rem 0.8rem;
+  padding: 0.58rem 0.8rem;
   color: var(--text-main);
   font-size: 0.88rem;
   outline: none;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.reg-select:focus {
   border-color: var(--accent);
+}
+
+.reg-answer-wrap {
+  margin-top: 0.5rem;
+  animation: fadeIn 0.18s ease;
+}
+
+/* Bottom subtle grey invite line inside Register modal */
+.reg-invite-footer {
+  margin-top: 1.1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+
+.reg-invite-grey-link {
+  font-size: 0.75rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.reg-invite-grey-link:hover {
+  color: #94a3b8;
+  text-decoration: underline;
+}
+
+.reg-invite-input-wrap {
+  margin-top: 0.55rem;
+}
+
+.reg-invite-input-wrap input {
+  width: 100%;
+  background: rgba(9, 13, 22, 0.85);
+  border: 1px dashed rgba(100, 116, 139, 0.4);
+  border-radius: 7px;
+  padding: 0.45rem 0.7rem;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  text-align: center;
+  outline: none;
+}
+
+.subtle-switch-link {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.subtle-switch-link:hover {
+  color: var(--accent);
 }
 
 .form-feedback {
@@ -672,7 +858,7 @@ body {
   gap: 0.6rem;
 }
 
-/* Admin Panel */
+/* Admin Panel & 1-Hour Invite Bar */
 .admin-tabs {
   display: flex;
   gap: 0.5rem;
@@ -696,9 +882,69 @@ body {
   color: var(--accent);
 }
 
+.admin-invite-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 11px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-invite-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #e0f2fe;
+  display: block;
+}
+
+.admin-invite-desc {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.admin-invite-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-select-sm {
+  width: auto;
+  padding: 0.42rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.admin-invites-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.invite-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.76rem;
+}
+
+.invite-pill.expired {
+  opacity: 0.5;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .admin-inline-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
@@ -713,13 +959,13 @@ body {
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: 0.81rem;
   text-align: left;
 }
 
 .admin-table th,
 .admin-table td {
-  padding: 0.6rem 0.75rem;
+  padding: 0.58rem 0.7rem;
   border-bottom: 1px solid var(--border-subtle);
 }
 
