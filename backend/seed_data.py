@@ -74,6 +74,17 @@ def seed():
                 "sort_order": 2,
             },
             {
+                "slug": "gemini-relay",
+                "name": "Gemini中转站",
+                "description": "自定义系统提示词，支持多密钥轮询的多轮对话与单轮直连。",
+                "icon": "✨",
+                "tier": "6+",
+                "target_url": "/apps/gemini-relay",
+                "open_in_new_tab": False,
+                "status": "active",
+                "sort_order": 3,
+            },
+            {
                 "slug": "mac-ai-assistant",
                 "name": "Mac 本地大模型",
                 "description": "挂载于 Mac 节点的 Ollama 本地推理服务。",
@@ -82,7 +93,7 @@ def seed():
                 "target_url": "/apps/mac-ai-assistant",
                 "open_in_new_tab": False,
                 "status": "offline",
-                "sort_order": 3,
+                "sort_order": 4,
             },
             {
                 "slug": "smart-home-hub",
@@ -93,7 +104,7 @@ def seed():
                 "target_url": "/apps/smart-home-hub",
                 "open_in_new_tab": False,
                 "status": "wip",
-                "sort_order": 4,
+                "sort_order": 5,
             },
             {
                 "slug": "family-recipes",

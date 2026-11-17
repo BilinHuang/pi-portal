@@ -919,6 +919,9 @@ def builtin_mini_app(
         return _render_notes_app(service, identity)
     if slug == "speedtest-node":
         return _render_speedtest_app(service, identity)
+    if slug == "gemini-relay":
+        from .relay import render_gemini_relay_app
+        return render_gemini_relay_app(service, identity)
     if slug == "story-studio":
         from .studio import render_story_studio_app
         return render_story_studio_app(service, identity)
